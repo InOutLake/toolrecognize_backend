@@ -1,0 +1,18 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.117.1",
+    "faststream>=0.5.48",
+    "psycopg2-binary>=2.9.10",
+    "pydantic-settings>=2.11.0",
+    "sqlalchemy[asyncio]>=2.0.43",
+    "uvicorn>=0.37.0",
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

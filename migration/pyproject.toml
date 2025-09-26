@@ -1,0 +1,14 @@
+[project]
+name = "migration"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.16.5",
+    "psycopg2-binary>=2.9.10",
+]
+
+[tool.pyright]
+venvPath="."
+venv=".venv"

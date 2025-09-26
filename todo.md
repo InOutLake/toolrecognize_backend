@@ -1,0 +1,3 @@
+- [ ] Database
+- [ ] RMQ
+- [ ] Image storage
