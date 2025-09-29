@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     minio_port: int = 9000
     minio_console_port: int = 9001
     
+    # S3 / MinIO
+    s3_endpoint_url: str = "http://minio:9000"
+    s3_access_key: str = "minioadmin"
+    s3_secret_key: str = "minioadmin"
+    s3_region: str = "us-east-1"
+    s3_bucket: str = "files"
+    
     @property
     def database_url(self) -> str:
         return f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"

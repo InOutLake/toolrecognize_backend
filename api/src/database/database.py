@@ -1,7 +1,7 @@
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
 from fastapi import Depends
 from enum import StrEnum, auto
 
@@ -10,13 +10,13 @@ from src.core.settings import SETTINGS
 
 ID_TYPE = Mapped[int]
 
+
 class SessionStatus(StrEnum):
-    OPEN_WAITING_FOR_APPROVAL = auto()
-    OPEN_APPROVED = auto()
+    OPEN_WAITING_FOR_APROVAL = auto()
     OPENED = auto()
-    CLOSE_WAITING_FOR_APPROVAL = auto()
-    CLOSE_APPROVED = auto()
+    CLOSE_WAITING_FOR_APROVAL = auto()
     CLOSED = auto()
+
 
 class TimestampMixin:
     created_at: Mapped[DateTime] = mapped_column(
@@ -26,19 +26,22 @@ class TimestampMixin:
         DateTime(timezone=False),
         server_default=func.now(),
         onupdate=func.now(),
-        nullable=False
+        nullable=False,
     )
+
 
 class Base(DeclarativeBase):
     pass
+
 
 class Employee(TimestampMixin, Base):
     __tablename__ = "employee"
 
     id: ID_TYPE = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
-    
+
     sessions: Mapped[list["Session"]] = relationship(back_populates="receiver")
+
 
 class Tool(TimestampMixin, Base):
     __tablename__ = "tool"
@@ -46,9 +49,10 @@ class Tool(TimestampMixin, Base):
     id: ID_TYPE = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(50))
-    
+
     session_tools: Mapped[list["SessionTool"]] = relationship(back_populates="tool")
-    tools_in_kits: Mapped[list["ToolsInKit"]] = relationship(back_populates="tool") 
+    tools_in_kits: Mapped[list["ToolInKit"]] = relationship(back_populates="tool")
+
 
 class Session(TimestampMixin, Base):
     __tablename__ = "session"
@@ -62,15 +66,20 @@ class Session(TimestampMixin, Base):
     status: Mapped[SessionStatus] = mapped_column()
 
     given_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)
-    returned_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)
+    returned_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
-    given_image_url: Mapped[str] = mapped_column(String(), nullable=True)
-    returned_image_url: Mapped[str] = mapped_column(String(), nullable=True)
+    given_image_key: Mapped[str] = mapped_column(String(), nullable=True)
+    returned_image_key: Mapped[str] = mapped_column(String(), nullable=True)
 
     receiver: Mapped["Employee"] = relationship(back_populates="sessions")
     location: Mapped["Storage"] = relationship(back_populates="sessions")
     kit: Mapped["Kit"] = relationship(back_populates="sessions")
-    session_tools: Mapped[list["SessionTool"]] = relationship(back_populates="session")
+    session_tools: Mapped[list["SessionTool"]] = relationship(
+        back_populates="session", cascade="all, delete-orphan"
+    )
+
 
 class SessionTool(TimestampMixin, Base):
     __tablename__ = "session_tool"
@@ -86,9 +95,12 @@ class SessionTool(TimestampMixin, Base):
     session: Mapped["Session"] = relationship(back_populates="session_tools")
 
     __table_args__ = (
-        CheckConstraint('quantity_given >= 0', name='check_quantity_given_positive'),
-        CheckConstraint('quantity_returned >= 0', name='check_quantity_returned_positive'),
+        CheckConstraint("quantity_given >= 0", name="check_quantity_given_positive"),
+        CheckConstraint(
+            "quantity_returned >= 0", name="check_quantity_returned_positive"
+        ),
     )
+
 
 class Kit(TimestampMixin, Base):
     __tablename__ = "kit"
@@ -96,23 +108,24 @@ class Kit(TimestampMixin, Base):
     id: ID_TYPE = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(100), nullable=True)
-    
-    sessions: Mapped[list["Session"]] = relationship(back_populates="kit")
-    tools_in_kit: Mapped[list["ToolsInKit"]] = relationship(back_populates="kit")
 
-class ToolsInKit(TimestampMixin, Base):
+    sessions: Mapped[list["Session"]] = relationship(back_populates="kit")
+    tools_in_kit: Mapped[list["ToolInKit"]] = relationship(back_populates="kit")
+
+
+class ToolInKit(TimestampMixin, Base):
     __tablename__ = "tools_in_kit"
 
     id: ID_TYPE = mapped_column(primary_key=True)
     tool_id: ID_TYPE = mapped_column(ForeignKey("tool.id"))
     kit_id: ID_TYPE = mapped_column(ForeignKey("kit.id"))
     quantity: Mapped[int] = mapped_column(Integer(), default=1)
-    
+
     tool: Mapped["Tool"] = relationship(back_populates="tools_in_kits")
     kit: Mapped["Kit"] = relationship(back_populates="tools_in_kit")
-    
+
     __table_args__ = (
-        CheckConstraint('quantity > 0', name='check_kit_quantity_positive'),
+        CheckConstraint("quantity > 0", name="check_kit_quantity_positive"),
     )
 
 
@@ -122,7 +135,7 @@ class Storage(TimestampMixin, Base):
     id: ID_TYPE = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
     address: Mapped[str] = mapped_column(String(100))
-    
+
     sessions: Mapped[list["Session"]] = relationship(back_populates="location")
 
 
@@ -146,4 +159,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-DbSessionDep = Depends(get_db)
+
+DbSessionDep = Annotated[AsyncSession, Depends(get_db)]
