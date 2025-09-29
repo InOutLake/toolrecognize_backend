@@ -1,8 +1,8 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.repository import AsyncRepository
-from src.database.database import DbSessionDep, Storage
+from src.core import AsyncRepository
+from src.database import DbSessionDep, Storage
 
 
 class LocationRepository(AsyncRepository[Storage]):

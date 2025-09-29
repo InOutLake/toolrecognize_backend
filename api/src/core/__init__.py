@@ -1,7 +1,15 @@
-from settings import SETTINGS
-from schemes import BaseDto, DtoModel, Model, Page, PageRequest
-from repository import AsyncRepository
-from repository_s3 import AsyncS3Repository
+from .settings import SETTINGS
+from .schemes import (
+    BaseDto,
+    DtoModel,
+    Model,
+    Page,
+    PageRequest,
+    ID_TYPE,
+    PageRequestDep,
+)
+from .repository import AsyncRepository
+from .repository_s3 import AsyncS3Repository, AsyncS3RepositoryDep
 
 __all__ = [
     "SETTINGS",
@@ -12,4 +20,7 @@ __all__ = [
     "Model",
     "Page",
     "PageRequest",
+    "AsyncS3RepositoryDep",
+    "ID_TYPE",
+    "PageRequestDep",
 ]

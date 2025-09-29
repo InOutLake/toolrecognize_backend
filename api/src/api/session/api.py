@@ -1,17 +1,17 @@
 from typing import Annotated
-from fastapi import APIRouter, File, UploadFile, Form
-import json
+from fastapi import APIRouter, File, UploadFile
 
-from api.analyze.service import AnalyzeServiceDep
+from src.api.analyze import AnalyzeServiceDep
 
 from .schemes import (
     SessionCreateDto,
-    SessionFilters,
+    SessionFiltersDep,
     SessionPageResponse,
     SessionDetailsResponse,
 )
 from .service import SessionServiceDep
-from src.core.schemes import ID_TYPE, PageRequest
+from src.core import ID_TYPE
+from src.core import PageRequest
 
 router = APIRouter(prefix="/session", tags=["session"])
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/session", tags=["session"])
 async def list_sessions(
     service: SessionServiceDep,
     page: PageRequest,
-    filters: SessionFilters = SessionFilters(),
+    filters: SessionFiltersDep,
 ) -> SessionPageResponse:
     return await service.list(page, filters)
 

@@ -9,7 +9,7 @@ from .schemes import (
     ToolUpdateDto,
     ToolPageResponse,
 )
-from core import PageRequest
+from src.core import PageRequest
 
 
 class ToolService:

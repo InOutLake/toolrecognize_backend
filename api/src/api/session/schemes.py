@@ -1,6 +1,8 @@
+from typing import Annotated
+from fastapi import Depends, Query
 from pydantic import BaseModel
-from core import BaseDto, Model
-from src.core import ID_TYPE, Page
+from src.core import BaseDto, Model, Page
+from src.core import ID_TYPE
 from src.database import SessionStatus
 
 
@@ -37,6 +39,31 @@ class SessionFilters(BaseModel):
     opened_to: str | None = None
     returned_from: str | None = None
     returned_to: str | None = None
+
+
+def session_filters(
+    receiver_id: Annotated[int | None, Query()] = None,
+    location_id: Annotated[int | None, Query()] = None,
+    kit_id: Annotated[int | None, Query()] = None,
+    status: Annotated[SessionStatus | None, Query()] = None,
+    opened_from: Annotated[str | None, Query()] = None,
+    opened_to: Annotated[str | None, Query()] = None,
+    returned_from: Annotated[str | None, Query()] = None,
+    returned_to: Annotated[str | None, Query()] = None,
+) -> SessionFilters:
+    return SessionFilters(
+        receiver_id=receiver_id,
+        location_id=location_id,
+        kit_id=kit_id,
+        status=status,
+        opened_from=opened_from,
+        opened_to=opened_to,
+        returned_from=returned_from,
+        returned_to=returned_to,
+    )
+
+
+SessionFiltersDep = Annotated[SessionFilters, Depends(session_filters)]
 
 
 class SessionCreateDto(BaseModel):

@@ -9,7 +9,7 @@ from .schemes import (
     KitUpdateDto,
     KitPageResponse,
 )
-from core import PageRequest
+from src.core import PageRequest
 
 
 class KitService:

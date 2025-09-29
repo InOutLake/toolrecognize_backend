@@ -4,12 +4,13 @@ from .schemes import (
     ToolCreateDto,
     ToolDeleteDto,
     ToolFilters,
+    ToolFiltersDep,
     ToolPageResponse,
     ToolResponse,
     ToolUpdateDto,
 )
 from .service import ToolServiceDep
-from core.schemes import PageRequest
+from src.core import PageRequest
 
 router = APIRouter(prefix="/tool", tags=["tool"])
 
@@ -18,14 +19,14 @@ router = APIRouter(prefix="/tool", tags=["tool"])
 async def list_tools(
     service: ToolServiceDep,
     page: PageRequest,
-    filters: ToolFilters,
+    filters: ToolFiltersDep,
 ):
     return await service.list(page, filters)
 
 
 @router.post("/", response_model=ToolResponse, status_code=201)
 async def create_tool(
-    payload: Annotated[ToolCreateDto, Body(ToolCreateDto, embed=True)],
+    payload: Annotated[ToolCreateDto, Body(embed=True)],
     service: ToolServiceDep,
 ):
     result = await service.create(payload)

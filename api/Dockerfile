@@ -8,7 +8,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 RUN uv venv .venv \
-    && uv pip install --python .venv/bin/python -r uv.lock
+    && uv sync --frozen
 
 FROM deps as final
 
@@ -17,6 +17,6 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "-X", "utf8", "main.py"]
+CMD ["uv", "run", "main.py"]
 
 

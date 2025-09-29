@@ -9,7 +9,7 @@ from .schemes import (
     LocationUpdateDto,
     LocationPageResponse,
 )
-from core import PageRequest
+from src.core import PageRequest
 
 
 class LocationService:

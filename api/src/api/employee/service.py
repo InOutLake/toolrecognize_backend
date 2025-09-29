@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException
-from repository import EmployeeRepository, EmployeeRepositoryDep
-from schemes import (
+from .repository import EmployeeRepository, EmployeeRepositoryDep
+from .schemes import (
     EmployeeCreateDto,
     EmployeeDeleteDto,
     EmployeeFilters,
@@ -9,7 +9,7 @@ from schemes import (
     EmployeeUpdateDto,
     EmployeePageResponse,
 )
-from core import PageRequest
+from src.core import PageRequest
 
 
 class EmployeeService:

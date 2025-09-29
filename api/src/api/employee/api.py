@@ -1,16 +1,18 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Body
+
+from src.core import PageRequestDep
 
 from .schemes import (
     EmployeeCreateDto,
     EmployeeDeleteDto,
-    EmployeeFilters,
+    EmployeeFiltersDep,
     EmployeePageResponse,
     EmployeeResponse,
     EmployeeUpdateDto,
 )
 from .service import EmployeeServiceDep
-from core.schemes import PageRequest
 
 router = APIRouter(prefix="/employee", tags=["employee"])
 
@@ -18,15 +20,15 @@ router = APIRouter(prefix="/employee", tags=["employee"])
 @router.get("/", response_model=EmployeePageResponse)
 async def list_employees(
     service: EmployeeServiceDep,
-    page: PageRequest,
-    filters: EmployeeFilters,
+    page: PageRequestDep,
+    filters: EmployeeFiltersDep,
 ):
     return await service.list(page, filters)
 
 
 @router.post("/", response_model=EmployeeResponse, status_code=201)
 async def create_employee(
-    payload: Annotated[EmployeeCreateDto, Body(EmployeeCreateDto, embed=True)],
+    payload: Annotated[EmployeeCreateDto, Body(embed=True)],
     service: EmployeeServiceDep,
 ):
     result = await service.create(payload)

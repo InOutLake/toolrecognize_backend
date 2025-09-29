@@ -1,6 +1,7 @@
+from typing import Annotated
+from fastapi import Depends, Query
 from pydantic import BaseModel
-from core import BaseDto, Model
-from src.core import Page
+from src.core import BaseDto, Model, Page
 
 
 class EmployeeResponse(BaseDto):
@@ -12,6 +13,13 @@ class EmployeePageResponse(Page[EmployeeResponse]): ...
 
 class EmployeeFilters(BaseModel):
     name: str | None = None
+
+
+def employee_filters(name: Annotated[str | None, Query()] = None) -> EmployeeFilters:
+    return EmployeeFilters(name=name)
+
+
+EmployeeFiltersDep = Annotated[EmployeeFilters, Depends(employee_filters)]
 
 
 class EmployeeCreateDto(BaseModel):

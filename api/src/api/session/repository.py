@@ -2,8 +2,8 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy import func, select
 
-from core.repository import AsyncRepository
-from core.schemes import ID_TYPE
+from src.core import AsyncRepository
+from src.core import ID_TYPE
 from src.database.database import (
     DbSessionDep,
     Kit,

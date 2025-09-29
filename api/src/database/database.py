@@ -5,10 +5,11 @@ from typing import Annotated, AsyncGenerator
 from fastapi import Depends
 from enum import StrEnum, auto
 
-from src.core.settings import SETTINGS
+from src.core import SETTINGS
+from src.core import ID_TYPE as id_type
 
 
-ID_TYPE = Mapped[int]
+ID_TYPE = Mapped[id_type]
 
 
 class SessionStatus(StrEnum):

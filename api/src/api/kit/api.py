@@ -4,12 +4,13 @@ from .schemes import (
     KitCreateDto,
     KitDeleteDto,
     KitFilters,
+    KitFiltersDep,
     KitPageResponse,
     KitResponse,
     KitUpdateDto,
 )
 from .service import KitServiceDep
-from core.schemes import PageRequest
+from src.core import PageRequest
 
 router = APIRouter(prefix="/kit", tags=["kit"])
 
@@ -18,14 +19,14 @@ router = APIRouter(prefix="/kit", tags=["kit"])
 async def list_kits(
     service: KitServiceDep,
     page: PageRequest,
-    filters: KitFilters,
+    filters: KitFiltersDep,
 ):
     return await service.list(page, filters)
 
 
 @router.post("/", response_model=KitResponse, status_code=201)
 async def create_kit(
-    payload: Annotated[KitCreateDto, Body(KitCreateDto, embed=True)],
+    payload: Annotated[KitCreateDto, Body(embed=True)],
     service: KitServiceDep,
 ):
     result = await service.create(payload)

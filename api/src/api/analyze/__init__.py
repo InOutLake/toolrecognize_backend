@@ -1,3 +1,3 @@
-from service import AnalyzeServiceDep
+from .service import AnalyzeServiceDep
 
 __all__ = ["AnalyzeServiceDep"]

@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from core import BaseDto, Model
-from core.schemes import Page
+from src.core import BaseDto, Model, Page
 
 
 class ToolResponse(BaseDto):
@@ -11,8 +10,21 @@ class ToolResponse(BaseDto):
 class ToolPageResponse(Page[ToolResponse]): ...
 
 
+from typing import Annotated
+from fastapi import Depends, Query
+
+
 class ToolFilters(BaseModel):
     name: str | None = None
+
+
+def tool_filters(
+    name: Annotated[str | None, Query()] = None,
+) -> ToolFilters:
+    return ToolFilters(name=name)
+
+
+ToolFiltersDep = Annotated[ToolFilters, Depends(tool_filters)]
 
 
 class ToolCreateDto(BaseModel):

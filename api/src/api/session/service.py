@@ -1,17 +1,16 @@
 from typing import Annotated
 import uuid
 from fastapi import Depends, HTTPException
-from core.repository_s3 import AsyncS3Repository, AsyncS3RepositoryDep
-from database.database import Session, SessionStatus, SessionTool
+from src.core import AsyncS3Repository, AsyncS3RepositoryDep
+from src.database import Session, SessionStatus, SessionTool
 from src.api.session_tool.repository import (
     SessionToolRepository,
     SessionToolRepositoryDep,
 )
-from src.core.schemes import ID_TYPE
+from src.core import ID_TYPE
 from src.api.session.repository import SessionRepository, SessionRepositoryDep
 from src.api.session.schemes import (
     SessionCreateDto,
-    SessionDeleteDto,
     SessionDetailsResponse,
     SessionFilters,
     SessionResponse,
@@ -19,7 +18,7 @@ from src.api.session.schemes import (
     SessionUpdateDto,
     SessionPageResponse,
 )
-from src.core.schemes import PageRequest
+from src.core import PageRequest
 
 
 class SessionNotFoundException(HTTPException):
@@ -95,14 +94,14 @@ class SessionService:
         image_url = await self._s3_repository.upload_file(
             key=str(uuid.uuid4()), data=image_recognized
         )
-        await self._session_repository.update(
+        session = await self._session_repository.update(
             session.id,
             {
                 "given_image_key": image_url,
                 "status": SessionStatus.OPEN_WAITING_FOR_APROVAL,
             },
         )
-        return await self.session_details_info(session.id)
+        return await self.session_details_info(session.id)  # type: ignore
 
     async def session_open(self, session_id: ID_TYPE) -> SessionDetailsResponse:
         await self._session_repository.open_session(session_id)
@@ -120,7 +119,7 @@ class SessionService:
         for tool in session.session_tools:
             if tool.tool_id in tools_recognized.keys():
                 updates.append(
-                    (tool.id, {"quantity_returned": tools_recognized[tool.tool_id]})
+                    (tool.id, {"quantity_returned": tools_recognized[tool.tool_id]})  # type: ignore
                 )
 
         if updates:
@@ -148,8 +147,8 @@ class SessionService:
             raise SessionNotFoundException()
         return SessionResponse.model_validate(result, from_attributes=True)
 
-    async def delete(self, session: SessionDeleteDto) -> None:
-        result = await self._session_repository.delete(session.id)
+    async def delete(self, session_id: ID_TYPE) -> None:
+        result = await self._session_repository.delete(session_id)
         if result is None:
             raise HTTPException(400, "Session not found")
         return

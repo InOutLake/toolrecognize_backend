@@ -2,9 +2,8 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.exc import NoResultFound
 
-from core.repository import AsyncRepository
-from core.schemes import ID_TYPE
-from src.database.database import DbSessionDep, Kit
+from src.core import AsyncRepository
+from src.database import DbSessionDep, Kit, ID_TYPE
 
 
 class KitRepository(AsyncRepository[Kit]):

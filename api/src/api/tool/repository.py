@@ -1,9 +1,8 @@
 from typing import Annotated
 from fastapi import Depends
 
-from core.repository import AsyncRepository
-from core.schemes import ID_TYPE
-from src.database.database import DbSessionDep, Tool
+from src.core import AsyncRepository
+from src.database import DbSessionDep, Tool, ID_TYPE
 
 
 class ToolRepository(AsyncRepository[Tool]):

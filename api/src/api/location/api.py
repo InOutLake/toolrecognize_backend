@@ -9,7 +9,7 @@ from .schemes import (
     LocationUpdateDto,
 )
 from .service import LocationServiceDep
-from core.schemes import PageRequest
+from src.core import PageRequest
 
 router = APIRouter(prefix="/location", tags=["location"])
 
@@ -25,7 +25,7 @@ async def list_locations(
 
 @router.post("/", response_model=LocationResponse, status_code=201)
 async def create_location(
-    payload: Annotated[LocationCreateDto, Body(LocationCreateDto, embed=True)],
+    payload: Annotated[LocationCreateDto, Body(embed=True)],
     service: LocationServiceDep,
 ):
     result = await service.create(payload)
