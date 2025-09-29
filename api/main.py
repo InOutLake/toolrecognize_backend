@@ -1,7 +1,13 @@
 import uvicorn
 from fastapi import APIRouter, FastAPI
 
-from src.api.employee import router as employee_router
+from src.api import (
+    employee_router,
+    session_router,
+    tool_router,
+    kit_router,
+    location_router,
+)
 
 app = FastAPI(title="Tools stacktaking control app", version="0.0.1")
 
@@ -15,6 +21,10 @@ def main():
     include_routers(
         app,
         employee_router,
+        session_router,
+        tool_router,
+        kit_router,
+        location_router,
     )
     uvicorn.run(app, host="0.0.0.0", port=8000)
 

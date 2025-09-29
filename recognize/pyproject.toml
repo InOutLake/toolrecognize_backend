@@ -10,6 +10,7 @@ dependencies = [
   "ultralytics>=8.3.203",
   "uvicorn>=0.37.0",
   "pillow>=10.0.0",
+  "pytest>=8.4.2",
 ]
 
 [tool.pyright]

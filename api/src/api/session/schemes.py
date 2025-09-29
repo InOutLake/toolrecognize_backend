@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from core import BaseDto, Model
-from core.schemes import ID_TYPE, Page
-from src.database.database import SessionStatus
+from src.core import ID_TYPE, Page
+from src.database import SessionStatus
 
 
 class SessionResponse(Model, BaseDto):

@@ -1,3 +1,3 @@
-from api.employee.api import router
+from .api import router
 
 __all__ = ["router"]

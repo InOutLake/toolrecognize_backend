@@ -1,3 +1,9 @@
-from database.database import DbSessionDep, Employee, SessionTool, Session
+from database.database import (
+    DbSessionDep,
+    Employee,
+    SessionTool,
+    Session,
+    SessionStatus,
+)
 
-__all__ = ["DbSessionDep", "Employee", "SessionTool", "Session"]
+__all__ = ["DbSessionDep", "Employee", "SessionTool", "Session", "SessionStatus"]

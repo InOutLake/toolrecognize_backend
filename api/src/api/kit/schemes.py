@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from core import BaseDto, Model
-from core.schemes import Page
+from src.core import Page
 
 
 class KitResponse(BaseDto):
