@@ -109,7 +109,7 @@ class SessionService:
             session.id,
             {
                 "given_image_key": image_url,
-                "status": SessionStatus.OPEN_WAITING_FOR_APROVAL,
+                "status": SessionStatus.open_waiting_for_aproval,
             },
         )
         return await self.session_details_info(session.id)  # type: ignore
@@ -144,7 +144,7 @@ class SessionService:
             session.id,
             {
                 "returned_image_key": image_url,
-                "status": SessionStatus.OPEN_WAITING_FOR_APROVAL,
+                "status": SessionStatus.close_waiting_for_aproval,
             },
         )
         return await self.session_details_info(session_id)

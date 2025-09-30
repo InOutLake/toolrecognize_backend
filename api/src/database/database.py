@@ -14,10 +14,10 @@ ID_TYPE = Mapped[id_type]
 
 
 class SessionStatus(StrEnum):
-    OPEN_WAITING_FOR_APROVAL = auto()
-    OPENED = auto()
-    CLOSE_WAITING_FOR_APROVAL = auto()
-    CLOSED = auto()
+    open_waiting_for_aproval = auto()
+    opened = auto()
+    close_waiting_for_aproval = auto()
+    closed = auto()
 
 
 class TimestampMixin:
