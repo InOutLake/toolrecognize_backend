@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated
 from typing import Optional, TypeVar
 from fastapi import Depends, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 ID_TYPE = int
 
@@ -26,6 +26,7 @@ class Page[T](BaseModel):
     items: list[T]
     page_number: int
     page_size: int
+    total: int
 
 
 class PageRequest(BaseModel):
@@ -34,7 +35,7 @@ class PageRequest(BaseModel):
 
     @property
     def offset(self):
-        return self.page_number * self.page_size
+        return (self.page_number - 1) * self.page_size
 
 
 def pagerequest(

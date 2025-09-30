@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -21,11 +22,13 @@ class SessionStatus(StrEnum):
 
 class TimestampMixin:
     created_at: Mapped[DateTime] = mapped_column(
-        DateTime(timezone=False), server_default=func.now(), nullable=False
+        DateTime(timezone=False),
+        default=datetime.now(),
+        nullable=False,
     )
     updated_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=False),
-        server_default=func.now(),
+        default=datetime.now(),
         onupdate=func.now(),
         nullable=False,
     )
@@ -41,7 +44,12 @@ class Employee(TimestampMixin, Base):
     id: ID_TYPE = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
 
-    sessions: Mapped[list["Session"]] = relationship(back_populates="receiver")
+    reciever_sessions: Mapped[list["Session"]] = relationship(
+        back_populates="receiver", foreign_keys="Session.reciever_id"
+    )
+    giver_sessions: Mapped[list["Session"]] = relationship(
+        back_populates="giver", foreign_keys="Session.giver_id"
+    )
 
 
 class Tool(TimestampMixin, Base):
@@ -74,7 +82,14 @@ class Session(TimestampMixin, Base):
     given_image_key: Mapped[str] = mapped_column(String(), nullable=True)
     returned_image_key: Mapped[str] = mapped_column(String(), nullable=True)
 
-    receiver: Mapped["Employee"] = relationship(back_populates="sessions")
+    receiver: Mapped["Employee"] = relationship(
+        back_populates="reciever_sessions",
+        foreign_keys=[reciever_id],
+    )
+    giver: Mapped["Employee"] = relationship(
+        back_populates="giver_sessions",
+        foreign_keys=[giver_id],
+    )
     location: Mapped["Storage"] = relationship(back_populates="sessions")
     kit: Mapped["Kit"] = relationship(back_populates="sessions")
     session_tools: Mapped[list["SessionTool"]] = relationship(
@@ -107,7 +122,7 @@ class Kit(TimestampMixin, Base):
     __tablename__ = "kit"
 
     id: ID_TYPE = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))
+    name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(String(100), nullable=True)
 
     sessions: Mapped[list["Session"]] = relationship(back_populates="kit")

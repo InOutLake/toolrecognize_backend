@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from src.core import Page, BaseDto, Model
 
 
-class LocationResponse(BaseDto):
+class LocationResponse(BaseDto, Model):
     name: str
     address: str
 

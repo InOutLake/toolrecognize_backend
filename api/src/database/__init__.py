@@ -8,7 +8,9 @@ from .database import (
     ID_TYPE,
     Storage,
     Tool,
+    ToolInKit,
 )
+from .seed import seed
 
 __all__ = [
     "DbSessionDep",
@@ -20,4 +22,6 @@ __all__ = [
     "Storage",
     "Kit",
     "Tool",
+    "seed",
+    "ToolInKit",
 ]

@@ -1,13 +1,55 @@
 import os
 import io
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from pydantic import BaseModel
 from ultralytics import YOLO
+import torch
+import uvicorn
 from PIL import Image
 
 
-# Use FastAPI lifespan event handler for model loading
-from contextlib import asynccontextmanager
+API_KEY = os.getenv("RECOGNIZE_API_KEY", "your_api_key_here")
+
+
+def api_key_dependency(request: Request):
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401, detail="Missing or invalid Authorization header"
+        )
+    key = auth.removeprefix("Bearer ").strip()
+    if key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
+
+
+class DetectionBBox(BaseModel):
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+
+
+class Detection(BaseModel):
+    class_id: int
+    class_name: str
+    confidence: float
+    bbox: DetectionBBox
+
+
+class ImageInfo(BaseModel):
+    width: int
+    height: int
+    mode: str
+
+
+class DetectResponse(BaseModel):
+    success: bool = True
+    detections: list[Detection]
+    total_detections: int
+    image_info: ImageInfo
+
 
 model = None
 
@@ -42,11 +84,15 @@ async def root():
     return {
         "message": "YOLO Detection API is running",
         "model_loaded": model is not None,
+        "GPU available": torch.cuda.is_available(),
     }
 
 
 @app.post("/detect")
-async def detect_objects(file: UploadFile = File(...)):
+async def detect_objects(
+    file: UploadFile = File(...),
+    # _: None = Depends(api_key_dependency),
+):
     global model
     if model is None:
         try:
@@ -55,6 +101,10 @@ async def detect_objects(file: UploadFile = File(...)):
             raise HTTPException(
                 status_code=500, detail=f"Failed to load model: {str(e)}"
             )
+
+    # for type checker
+    if model is None:
+        raise HTTPException(status_code=500, detail="Failed to load model")
 
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -75,37 +125,37 @@ async def detect_objects(file: UploadFile = File(...)):
             boxes = result.boxes
             if boxes is not None:
                 for box in boxes:
-                    # Get box coordinates, confidence, and class
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     confidence = float(box.conf[0].cpu().numpy())
                     class_id = int(box.cls[0].cpu().numpy())
                     class_name = model.names[class_id]
+                    bbox = DetectionBBox(x1=x1, y1=y1, x2=x2, y2=y2)
+                    detections.append(
+                        Detection(
+                            class_id=class_id,
+                            class_name=class_name,
+                            confidence=confidence,
+                            bbox=bbox,
+                        )
+                    )
 
-                    detection = {
-                        "class_id": class_id,
-                        "class_name": class_name,
-                        "confidence": confidence,
-                        "bbox": {
-                            "x1": float(x1),
-                            "y1": float(y1),
-                            "x2": float(x2),
-                            "y2": float(y2),
-                        },
-                    }
-                    detections.append(detection)
-
-        return JSONResponse(
-            content={
-                "success": True,
-                "detections": detections,
-                "total_detections": len(detections),
-                "image_info": {
-                    "width": image.width,
-                    "height": image.height,
-                    "mode": image.mode,
-                },
-            }
+        response = DetectResponse(
+            detections=detections,
+            total_detections=len(detections),
+            image_info=ImageInfo(
+                width=image.width, height=image.height, mode=image.mode
+            ),
         )
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Detection failed: {str(e)}")
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )

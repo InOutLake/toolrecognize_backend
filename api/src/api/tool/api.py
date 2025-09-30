@@ -3,7 +3,6 @@ from fastapi import APIRouter, Body
 from .schemes import (
     ToolCreateDto,
     ToolDeleteDto,
-    ToolFilters,
     ToolFiltersDep,
     ToolPageResponse,
     ToolResponse,
@@ -26,7 +25,7 @@ async def list_tools(
 
 @router.post("/", response_model=ToolResponse, status_code=201)
 async def create_tool(
-    payload: Annotated[ToolCreateDto, Body(embed=True)],
+    payload: Annotated[ToolCreateDto, Body(embed=False)],
     service: ToolServiceDep,
 ):
     result = await service.create(payload)

@@ -8,7 +8,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 RUN uv venv .venv \
-    && uv pip install --python .venv/bin/python -r uv.lock
+    && uv sync --frozen
 
 FROM deps as final
 

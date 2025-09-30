@@ -46,9 +46,11 @@ class EmployeeService:
         return EmployeePageResponse(
             items=[
                 EmployeeResponse.model_validate(empl, from_attributes=True)
-                for empl in employees
+                for empl in employees[0]
             ],
-            **page_request.model_dump(),
+            page_number=page_request.page_number,
+            page_size=page_request.page_size,
+            total=employees[1],
         )
 
 

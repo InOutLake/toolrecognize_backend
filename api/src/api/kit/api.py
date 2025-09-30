@@ -3,7 +3,6 @@ from fastapi import APIRouter, Body
 from .schemes import (
     KitCreateDto,
     KitDeleteDto,
-    KitFilters,
     KitFiltersDep,
     KitPageResponse,
     KitResponse,
@@ -26,7 +25,7 @@ async def list_kits(
 
 @router.post("/", response_model=KitResponse, status_code=201)
 async def create_kit(
-    payload: Annotated[KitCreateDto, Body(embed=True)],
+    payload: Annotated[KitCreateDto, Body(embed=False)],
     service: KitServiceDep,
 ):
     result = await service.create(payload)

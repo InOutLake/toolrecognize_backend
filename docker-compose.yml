@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   migrate:
@@ -7,10 +7,12 @@ services:
       dockerfile: Dockerfile
     env_file:
       - local.env
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     depends_on:
       postgres:
         condition: service_healthy
-    restart: 'no'
+    restart: "no"
 
   api:
     build:
@@ -18,28 +20,53 @@ services:
       dockerfile: Dockerfile
     env_file:
       - local.env
-    environment:
-      - PYTHONUNBUFFERED=1
     ports:
-      - '${APP_PORT:-8000}:8000'
+      - "${APP_PORT:-8000}:8000"
+      - "5678:5678"
+    volumes:
+      - ./api/src:/app/src
     depends_on:
       migrate:
         condition: service_completed_successfully
-      rabbitmq:
-        condition: service_healthy
+      # rabbitmq:
+      #   condition: service_healthy
 
-  celery_worker:
+  recognize:
     build:
       context: ./recognize
       dockerfile: Dockerfile
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     env_file:
       - local.env
-    command: sh -c "celery -A ${CELERY_APP} worker --loglevel=${CELERY_LOGLEVEL:-info} --concurrency=${CELERY_CONCURRENCY:-1}"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - "${RECOGNIZE_APP_PORT:-8001}:8000"
     depends_on:
       migrate:
         condition: service_completed_successfully
-      rabbitmq:
-        condition: service_healthy
+
+
+  # celery_worker:
+  #   build:
+  #     context: ./recognize
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - local.env
+  #   command: sh -c "uv run celery -A ${CELERY_APP} worker --loglevel=${CELERY_LOGLEVEL:-info} --concurrency=${CELERY_CONCURRENCY:-1}"
+  #   depends_on:
+  #     migrate:
+  #       condition: service_completed_successfully
+  #     rabbitmq:
+  #       condition: service_healthy
 
   postgres:
     image: postgres:16-alpine
@@ -48,30 +75,36 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+  adminer:
+    image: adminer
+    restart: always
     ports:
-      - '${RABBITMQ_PORT:-5672}:5672'
-      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - 8080:8080
+
+  # rabbitmq:
+  #   image: rabbitmq:3.13-management-alpine
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+  #     - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+  #   ports:
+  #     - "${RABBITMQ_PORT:-5672}:5672"
+  #     - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+  #   volumes:
+  #     - rabbitmq_data:/var/lib/rabbitmq
+  #   healthcheck:
+  #     test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
 
   minio:
     image: minio/minio:latest
@@ -79,18 +112,20 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
-      - '${MINIO_PORT:-9000}:9000'
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
 
 volumes:
   pg_data:
-  rabbitmq_data:
+  # rabbitmq_data:
   minio_data:
+
+

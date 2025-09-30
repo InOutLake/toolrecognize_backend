@@ -1,8 +1,9 @@
 from typing import Annotated
+
 from fastapi import Depends, Query
 from pydantic import BaseModel
-from src.core import BaseDto, Model, Page
-from src.core import ID_TYPE
+
+from src.core import ID_TYPE, BaseDto, Model, Page
 from src.database import SessionStatus
 
 

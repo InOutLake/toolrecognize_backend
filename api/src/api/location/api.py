@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body
 from .schemes import (
     LocationCreateDto,
     LocationDeleteDto,
-    LocationFilters,
+    LocationFiltersDep,
     LocationPageResponse,
     LocationResponse,
     LocationUpdateDto,
@@ -18,14 +18,14 @@ router = APIRouter(prefix="/location", tags=["location"])
 async def list_locations(
     service: LocationServiceDep,
     page: PageRequest,
-    filters: LocationFilters,
+    filters: LocationFiltersDep,
 ):
     return await service.list(page, filters)
 
 
 @router.post("/", response_model=LocationResponse, status_code=201)
 async def create_location(
-    payload: Annotated[LocationCreateDto, Body(embed=True)],
+    payload: Annotated[LocationCreateDto, Body(embed=False)],
     service: LocationServiceDep,
 ):
     result = await service.create(payload)

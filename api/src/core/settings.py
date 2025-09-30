@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -40,6 +39,13 @@ class Settings(BaseSettings):
     s3_secret_key: str = "minioadmin"
     s3_region: str = "us-east-1"
     s3_bucket: str = "files"
+
+    # Analyze service
+    recognize_api_url: str = "http://recognize:8000/detect"
+    recognize_api_key: str = "some_secret_key"
+
+    debug: int = 0
+    test: int = 0
 
     @property
     def database_url(self) -> str:

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from src.core import BaseDto, Model, Page
 
 
-class KitResponse(BaseDto):
+class KitResponse(BaseDto, Model):
     name: str
     description: str | None = None
 

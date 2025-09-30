@@ -2,21 +2,27 @@ from typing import Annotated, Any
 from fastapi import Depends
 
 
-class AnalyzeServiceMock:
-    def analyze(self, image: bytes) -> dict[str, Any]:
-        return {
-            "analyzed_image": b"some image bytes",
-            "items": {
-                "brace": 1,
-                "screwdriver_cross": 1,
-                "screwdriver_shift_cross": 1,
-                "shernitsa": 1,
-            },
-        }
+import requests
+from src.core import SETTINGS
+from .schemes import DetectResponse
+
+
+class AnalyzeService:
+    def __init__(self):
+        self.api_url = SETTINGS.analyze_api_url
+        self.api_key = SETTINGS.analyze_api_key
+
+    def analyze(self, image: bytes) -> DetectResponse:
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        files = {"file": ("image.jpg", image, "image/jpeg")}
+        response = requests.post(self.api_url, headers=headers, files=files)
+        response.raise_for_status()
+
+        return DetectResponse(**response.json())
 
 
 def get_analyze_service():
-    return AnalyzeServiceMock()
+    return AnalyzeService()
 
 
-AnalyzeServiceDep = Annotated[AnalyzeServiceMock, Depends(get_analyze_service)]
+AnalyzeServiceDep = Annotated[AnalyzeService, Depends(get_analyze_service)]

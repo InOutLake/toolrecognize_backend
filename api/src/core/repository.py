@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import (
     Any,
-    Dict,
     Generic,
-    Iterable,
     List,
     Mapping,
     Optional,
@@ -38,12 +36,13 @@ class AsyncRepository(Generic[ModelT]):
 
         if filters:
             for field_name, value in filters.items():
-                column = getattr(self.model, field_name, None)
-                if column is None:
-                    raise AttributeError(
-                        f"Model {self.model.__name__} has no column '{field_name}'"
-                    )
-                stmt = stmt.where(column == value)
+                if value is not None:
+                    column = getattr(self.model, field_name, None)
+                    if column is None:
+                        raise AttributeError(
+                            f"Model {self.model.__name__} has no column '{field_name}'"
+                        )
+                    stmt = stmt.where(column == value)
 
         if extra_filters:
             for expr in extra_filters:

@@ -1,17 +1,15 @@
+from typing import Annotated
+from fastapi import Depends, Query
 from pydantic import BaseModel
 from src.core import BaseDto, Model, Page
 
 
-class ToolResponse(BaseDto):
+class ToolResponse(BaseDto, Model):
     name: str
     description: str
 
 
 class ToolPageResponse(Page[ToolResponse]): ...
-
-
-from typing import Annotated
-from fastapi import Depends, Query
 
 
 class ToolFilters(BaseModel):

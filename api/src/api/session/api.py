@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, File, UploadFile
 
-from src.api.analyze import AnalyzeServiceDep
+from src.api.recognize import AnalyzeServiceDep
 
 from .schemes import (
     SessionCreateDto,

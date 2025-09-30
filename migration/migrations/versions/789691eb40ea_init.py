@@ -39,7 +39,7 @@ def upgrade() -> None:
     op.create_table(
         "kit",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("name", sa.String(50), nullable=False),
+        sa.Column("name", sa.String(100), nullable=False),
         sa.Column("description", sa.String(100), nullable=True),
         sa.Column("created_at", sa.DateTime, nullable=False),
         sa.Column("updated_at", sa.DateTime, nullable=False),

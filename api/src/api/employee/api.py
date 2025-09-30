@@ -28,7 +28,7 @@ async def list_employees(
 
 @router.post("/", response_model=EmployeeResponse, status_code=201)
 async def create_employee(
-    payload: Annotated[EmployeeCreateDto, Body(embed=True)],
+    payload: Annotated[EmployeeCreateDto, Body(embed=False)],
     service: EmployeeServiceDep,
 ):
     result = await service.create(payload)

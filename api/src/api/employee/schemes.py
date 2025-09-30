@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from src.core import BaseDto, Model, Page
 
 
-class EmployeeResponse(BaseDto):
+class EmployeeResponse(BaseDto, Model):
     name: str
 
 
@@ -15,7 +15,9 @@ class EmployeeFilters(BaseModel):
     name: str | None = None
 
 
-def employee_filters(name: Annotated[str | None, Query()] = None) -> EmployeeFilters:
+def employee_filters(
+    name: Annotated[str | None, Query()] = None,
+) -> EmployeeFilters:
     return EmployeeFilters(name=name)
 
 
