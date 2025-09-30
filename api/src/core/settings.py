@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+import json
 
 
 class Settings(BaseSettings):
@@ -43,6 +44,9 @@ class Settings(BaseSettings):
     # Analyze service
     recognize_api_url: str = "http://recognize:8000/detect"
     recognize_api_key: str = "some_secret_key"
+
+    tools_mapping_str: str = '{"1":"1"}'
+    tools_mapping: dict[int, int] = json.loads(tools_mapping_str)
 
     debug: int = 0
     test: int = 0

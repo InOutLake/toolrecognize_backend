@@ -1,3 +1,4 @@
-from .service import AnalyzeServiceDep
+from .service import RecognizeServiceDep
+from .schemes import Detection
 
-__all__ = ["AnalyzeServiceDep"]
+__all__ = ["RecognizeServiceDep", "Detection"]

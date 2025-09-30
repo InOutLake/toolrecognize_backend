@@ -1,7 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, Body, File, Form, UploadFile
 
-from src.api.recognize import AnalyzeServiceDep
+from src.api.recognize import RecognizeServiceDep
 
 from .schemes import (
     SessionCreateDto,
@@ -36,17 +36,23 @@ async def get_session_details(
 @router.post("/", response_model=SessionDetailsResponse)
 async def initialize_session(
     service: SessionServiceDep,
-    analyze_service: AnalyzeServiceDep,
-    session_data: SessionCreateDto,
+    recognize_service: RecognizeServiceDep,
+    receiver_id: Annotated[int, Form()],
+    location_id: Annotated[int, Form()],
+    kit_id: Annotated[int, Form()],
     image: Annotated[UploadFile, File()],
 ):
+    session_data = SessionCreateDto(
+        receiver_id=receiver_id,
+        location_id=location_id,
+        kit_id=kit_id,
+    )
     image_data = await image.read()
-    tools_recognized = analyze_service.analyze(image_data)
-
+    tools_recognized = recognize_service.recognize(image_data)
     return await service.initialize_session(
         session_data=session_data,
         image_recognized=image_data,
-        tools_recognized=tools_recognized["items"],  # type: ignore
+        detections=tools_recognized.detections,
     )
 
 
@@ -55,24 +61,23 @@ async def open_session(
     session_id: ID_TYPE,
     service: SessionServiceDep,
 ):
-    """Open a session for tool usage."""
     return await service.session_open(session_id)
 
 
 @router.post("/{session_id}/preclose", response_model=SessionDetailsResponse)
 async def preclose_session(
     session_id: ID_TYPE,
-    analyze_service: AnalyzeServiceDep,
+    analyze_service: RecognizeServiceDep,
     service: SessionServiceDep,
     image: Annotated[UploadFile, File()],
 ):
     image_data = await image.read()
-    tools_recognized = analyze_service.analyze(image_data)
+    tools_recognized = analyze_service.recognize(image_data)
 
     return await service.session_preclose(
         session_id=session_id,
         image_recognized=image_data,
-        tools_recognized=tools_recognized["items"],  # type: ignore
+        detections=tools_recognized.detections,
     )
 
 

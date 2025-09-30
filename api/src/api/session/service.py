@@ -1,13 +1,15 @@
+from collections import Counter
 from typing import Annotated
 import uuid
 from fastapi import Depends, HTTPException
+from src.api.recognize import Detection
 from src.core import AsyncS3Repository, AsyncS3RepositoryDep
 from src.database import Session, SessionStatus, SessionTool
 from src.api.session_tool.repository import (
     SessionToolRepository,
     SessionToolRepositoryDep,
 )
-from src.core import ID_TYPE
+from src.core import ID_TYPE, SETTINGS, PageRequest
 from src.api.session.repository import SessionRepository, SessionRepositoryDep
 from src.api.session.schemes import (
     SessionCreateDto,
@@ -18,7 +20,6 @@ from src.api.session.schemes import (
     SessionUpdateDto,
     SessionPageResponse,
 )
-from src.core import PageRequest
 
 
 class SessionNotFoundException(HTTPException):
@@ -74,12 +75,22 @@ class SessionService:
         result.tools = session_tools_info
         return result
 
+    def _map_detetctions_to_tools(
+        self, detections: list[Detection]
+    ) -> dict[ID_TYPE, int]:
+        tools_counted = dict(Counter(detection.class_id for detection in detections))
+        return {
+            SETTINGS.tools_mapping[class_id]: quantity
+            for class_id, quantity in tools_counted.items()
+        }
+
     async def initialize_session(
         self,
         session_data: SessionCreateDto,
         image_recognized: bytes,
-        tools_recognized: dict[ID_TYPE, int],
+        detections: list[Detection],
     ) -> SessionDetailsResponse:
+        tools_recognized = self._map_detetctions_to_tools(detections)
         session = await self._session_repository.create(session_data.model_dump())
         session_tools = [
             SessionTool(
@@ -111,10 +122,11 @@ class SessionService:
         self,
         session_id: ID_TYPE,
         image_recognized: bytes,
-        tools_recognized: dict[ID_TYPE, int],
+        detections: list[Detection],
     ) -> SessionDetailsResponse:
         session = await self._get_session(session_id)
 
+        tools_recognized = self._map_detetctions_to_tools(detections)
         updates = []
         for tool in session.session_tools:
             if tool.tool_id in tools_recognized.keys():

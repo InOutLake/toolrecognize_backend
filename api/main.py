@@ -1,5 +1,6 @@
 import asyncio
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, FastAPI
 import sys
 
@@ -14,6 +15,14 @@ from src.database import seed
 from src.core import SETTINGS
 
 app = FastAPI(title="Tools stacktaking control app", version="0.0.1")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def include_routers(app: FastAPI, *routers: APIRouter) -> None:
