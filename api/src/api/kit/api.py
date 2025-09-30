@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Body
+
 from .schemes import (
     KitCreateDto,
     KitDeleteDto,
@@ -9,7 +10,7 @@ from .schemes import (
     KitUpdateDto,
 )
 from .service import KitServiceDep
-from src.core import PageRequest
+from src.core import PageRequestDep
 
 router = APIRouter(prefix="/kit", tags=["kit"])
 
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/kit", tags=["kit"])
 @router.get("/", response_model=KitPageResponse)
 async def list_kits(
     service: KitServiceDep,
-    page: PageRequest,
+    page: PageRequestDep,
     filters: KitFiltersDep,
 ):
     return await service.list(page, filters)

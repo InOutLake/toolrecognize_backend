@@ -42,9 +42,11 @@ class ToolService:
         return ToolPageResponse(
             items=[
                 ToolResponse.model_validate(tool, from_attributes=True)
-                for tool in tools
+                for tool in tools[0]
             ],
-            **page_request.model_dump(),
+            page_number=page_request.page_number,
+            page_size=page_request.page_size,
+            total=tools[1],
         )
 
 

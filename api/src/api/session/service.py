@@ -156,17 +156,21 @@ class SessionService:
     async def list(
         self, page_request: PageRequest, filters: SessionFilters
     ) -> SessionPageResponse:
-        employees = await self._session_repository.list(
+        sessions = await self._session_repository.list(
             filters=filters.model_dump(exclude_unset=True),
             offset=page_request.offset,
             limit=page_request.page_size,
         )
         return SessionPageResponse(
             items=[
-                SessionResponse.model_validate(empl, from_attributes=True)
-                for empl in employees
-            ],
-            **page_request.model_dump(),
+                SessionResponse.model_validate(session, from_attributes=True)
+                for session in sessions[0]
+            ]
+            if sessions[0]
+            else [],
+            page_number=page_request.page_number,
+            page_size=page_request.page_size,
+            total=sessions[1],
         )
 
 

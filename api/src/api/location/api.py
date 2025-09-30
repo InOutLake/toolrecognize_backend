@@ -9,7 +9,7 @@ from .schemes import (
     LocationUpdateDto,
 )
 from .service import LocationServiceDep
-from src.core import PageRequest
+from src.core import PageRequestDep
 
 router = APIRouter(prefix="/location", tags=["location"])
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/location", tags=["location"])
 @router.get("/", response_model=LocationPageResponse)
 async def list_locations(
     service: LocationServiceDep,
-    page: PageRequest,
+    page: PageRequestDep,
     filters: LocationFiltersDep,
 ):
     return await service.list(page, filters)

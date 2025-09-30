@@ -44,9 +44,11 @@ class LocationService:
         return LocationPageResponse(
             items=[
                 LocationResponse.model_validate(loc, from_attributes=True)
-                for loc in locations
+                for loc in locations[0]
             ],
-            **page_request.model_dump(),
+            page_number=page_request.page_number,
+            page_size=page_request.page_size,
+            total=locations[1],
         )
 
 

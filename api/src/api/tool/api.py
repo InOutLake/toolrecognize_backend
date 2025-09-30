@@ -9,7 +9,7 @@ from .schemes import (
     ToolUpdateDto,
 )
 from .service import ToolServiceDep
-from src.core import PageRequest
+from src.core import PageRequestDep
 
 router = APIRouter(prefix="/tool", tags=["tool"])
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/tool", tags=["tool"])
 @router.get("/", response_model=ToolPageResponse)
 async def list_tools(
     service: ToolServiceDep,
-    page: PageRequest,
+    page: PageRequestDep,
     filters: ToolFiltersDep,
 ):
     return await service.list(page, filters)

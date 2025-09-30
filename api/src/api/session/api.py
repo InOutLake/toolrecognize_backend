@@ -11,7 +11,7 @@ from .schemes import (
 )
 from .service import SessionServiceDep
 from src.core import ID_TYPE
-from src.core import PageRequest
+from src.core import PageRequestDep
 
 router = APIRouter(prefix="/session", tags=["session"])
 
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/session", tags=["session"])
 @router.get("/", response_model=SessionPageResponse)
 async def list_sessions(
     service: SessionServiceDep,
-    page: PageRequest,
+    page: PageRequestDep,
     filters: SessionFiltersDep,
 ) -> SessionPageResponse:
     return await service.list(page, filters)

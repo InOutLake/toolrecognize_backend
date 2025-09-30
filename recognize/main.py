@@ -2,7 +2,7 @@ import os
 import io
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from ultralytics import YOLO
 import torch
@@ -52,6 +52,7 @@ class DetectResponse(BaseModel):
 
 
 model = None
+THRESHOLD = float(os.getenv("RECOGNIZE_THRESHOLD", "0.7"))
 
 
 def load_model():
@@ -127,17 +128,18 @@ async def detect_objects(
                 for box in boxes:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     confidence = float(box.conf[0].cpu().numpy())
-                    class_id = int(box.cls[0].cpu().numpy())
-                    class_name = model.names[class_id]
-                    bbox = DetectionBBox(x1=x1, y1=y1, x2=x2, y2=y2)
-                    detections.append(
-                        Detection(
-                            class_id=class_id,
-                            class_name=class_name,
-                            confidence=confidence,
-                            bbox=bbox,
+                    if confidence >= THRESHOLD:
+                        class_id = int(box.cls[0].cpu().numpy())
+                        class_name = model.names[class_id]
+                        bbox = DetectionBBox(x1=x1, y1=y1, x2=x2, y2=y2)
+                        detections.append(
+                            Detection(
+                                class_id=class_id,
+                                class_name=class_name,
+                                confidence=confidence,
+                                bbox=bbox,
+                            )
                         )
-                    )
 
         response = DetectResponse(
             detections=detections,

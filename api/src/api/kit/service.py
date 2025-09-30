@@ -41,9 +41,11 @@ class KitService:
         )
         return KitPageResponse(
             items=[
-                KitResponse.model_validate(kit, from_attributes=True) for kit in kits
+                KitResponse.model_validate(kit, from_attributes=True) for kit in kits[0]
             ],
-            **page_request.model_dump(),
+            page_number=page_request.page_number,
+            page_size=page_request.page_size,
+            total=kits[1],
         )
 
 
