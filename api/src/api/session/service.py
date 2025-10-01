@@ -62,14 +62,14 @@ class SessionService:
         session = await self._get_session(session_id)
         session_tools_info = await self._aggregate_session_tools_info(session_id)
         result = SessionDetailsResponse.model_validate(session, from_attributes=True)
-        if result.given_image_url is not None:
+        if session.given_image_key is not None:
             result.given_image_url = await self._s3_repository.generate_presigned_url(
-                key=result.given_image_url
+                key=session.given_image_key
             )
-        if result.returned_image_url is not None:
+        if session.returned_image_key is not None:
             result.returned_image_url = (
                 await self._s3_repository.generate_presigned_url(
-                    key=result.returned_image_url
+                    key=session.returned_image_key
                 )
             )
         result.tools = session_tools_info
@@ -126,7 +126,6 @@ class SessionService:
         detections: list[Detection],
     ) -> SessionDetailsResponse:
         session = await self._get_session(session_id)
-
         tools_recognized = self._map_detetctions_to_tools(detections)
         updates = []
         for tool in session.session_tools:
