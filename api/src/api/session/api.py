@@ -48,7 +48,7 @@ async def initialize_session(
         kit_id=kit_id,
     )
     image_data = await image.read()
-    tools_recognized = recognize_service.recognize(image_data)
+    tools_recognized = await recognize_service.recognize(image_data)
     return await service.initialize_session(
         session_data=session_data,
         image_recognized=image_data,

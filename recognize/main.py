@@ -3,6 +3,7 @@ import io
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ultralytics import YOLO
 import torch
@@ -78,6 +79,13 @@ async def lifespan(app):
 
 
 app = FastAPI(title="YOLO Detection API", version="1.0.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")

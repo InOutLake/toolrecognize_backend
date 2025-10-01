@@ -46,23 +46,8 @@ class RecognizeService:
         return DetectResponse(**response.json())
 
 
-class ReService:
-    def __init__(self):
-        self.api_url = SETTINGS.recognize_api_url
-        self.api_key = SETTINGS.recognize_api_key
-
-    async def recognize(self, image: bytes) -> DetectResponse:
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        files = {"file": ("image.jpg", image, "image/jpeg")}
-        async with httpx.AsyncClient() as client:
-            response = await client.post(self.api_url, headers=headers, files=files)
-            response.raise_for_status()
-
-        return DetectResponse(**response.json())
-
-
 def get_recognize_service():
-    return RecognizeServiceMock()
+    return RecognizeService()
 
 
-RecognizeServiceDep = Annotated[RecognizeServiceMock, Depends(get_recognize_service)]
+RecognizeServiceDep = Annotated[RecognizeService, Depends(get_recognize_service)]
