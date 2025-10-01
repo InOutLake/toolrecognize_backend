@@ -3,7 +3,7 @@ from typing import Annotated
 import uuid
 from fastapi import Depends, HTTPException
 from src.api.recognize import Detection
-from src.core import AsyncS3Repository, AsyncS3RepositoryDep
+from src.storage import AsyncS3Repository, AsyncS3RepositoryDep
 from src.database import Session, SessionStatus, SessionTool
 from src.api.session_tool.repository import (
     SessionToolRepository,
@@ -91,7 +91,9 @@ class SessionService:
         detections: list[Detection],
     ) -> SessionDetailsResponse:
         tools_recognized = self._map_detetctions_to_tools(detections)
-        session = await self._session_repository.create(session_data.model_dump())
+        data = session_data.model_dump()
+        data["status"] = SessionStatus.open_waiting_for_aproval.value
+        session = await self._session_repository.create(data)
         session_tools = [
             SessionTool(
                 tool_id=id,
@@ -109,7 +111,6 @@ class SessionService:
             session.id,
             {
                 "given_image_key": image_url,
-                "status": SessionStatus.open_waiting_for_aproval,
             },
         )
         return await self.session_details_info(session.id)  # type: ignore

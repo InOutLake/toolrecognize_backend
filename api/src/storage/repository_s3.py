@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
 import aioboto3
+from botocore.utils import ClientError
+from fastapi import Depends
 
-from .settings import SETTINGS
+from src.core import SETTINGS
 
 
 class AsyncS3Repository:
@@ -22,6 +24,20 @@ class AsyncS3Repository:
             aws_secret_access_key=SETTINGS.s3_secret_key,
             region_name=SETTINGS.s3_region,
         )
+
+    async def init_bucket(self) -> None:
+        async with self._client() as s3:  # type: ignore
+            try:
+                await s3.head_bucket(Bucket=self._bucket)
+                print(f"Bucket '{self._bucket}' already exists.")
+            except ClientError as e:
+                error_code = e.response["Error"]["Code"]
+                if error_code == "404":
+                    print(f"Bucket '{self._bucket}' does not exist. Creating...")
+                    await s3.create_bucket(Bucket=self._bucket)
+                    print(f"Bucket '{self._bucket}' created successfully.")
+                else:
+                    raise
 
     async def upload_file(
         self, *, key: str, data: bytes, content_type: str | None = None
@@ -47,3 +63,10 @@ class AsyncS3Repository:
                 ExpiresIn=expires_in_seconds,
             )
             return url
+
+
+def get_s3_storage() -> AsyncS3Repository:
+    return AsyncS3Repository()
+
+
+AsyncS3RepositoryDep = Annotated[AsyncS3Repository, Depends(get_s3_storage)]

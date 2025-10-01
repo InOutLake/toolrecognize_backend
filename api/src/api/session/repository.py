@@ -1,7 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Any, Mapping, Optional, Sequence, override
 from fastapi import Depends
 from sqlalchemy import func, select
-
+from sqlalchemy.orm import selectinload
 from src.core import AsyncRepository
 from src.core import ID_TYPE
 from src.database.database import (
@@ -42,10 +42,24 @@ class SessionRepository(AsyncRepository[Session]):
         return result.all()
 
     async def open_session(self, session_id: ID_TYPE):
-        await self.update(session_id, {"status": SessionStatus.OPENED})
+        await self.update(session_id, {"status": SessionStatus.opened})
 
     async def close_session(self, session_id: ID_TYPE):
-        await self.update(session_id, {"status": SessionStatus.CLOSED})
+        await self.update(session_id, {"status": SessionStatus.closed})
+
+    @override
+    async def get_one(
+        self,
+        *,
+        filters: Optional[Mapping[str, Any]] = None,
+        extra_filters: Optional[Sequence[Any]] = None,
+    ) -> Session | None:
+        stmt = self._build_select(filters=filters, extra_filters=extra_filters).options(
+            selectinload(Session.session_tools)
+        )
+        stmt = stmt.limit(1)
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
 
 
 def get_session_repository(db: DbSessionDep) -> SessionRepository:

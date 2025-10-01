@@ -41,7 +41,7 @@ RECOGNIZED_MISSING = [
 ]
 
 SESSION_DATA = {
-    "receiver_id": 1,
+    "reciever_id": 1,
     "location_id": 1,
     "kit_id": 1,
 }

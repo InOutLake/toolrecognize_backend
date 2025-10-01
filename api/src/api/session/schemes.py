@@ -8,7 +8,7 @@ from src.database import SessionStatus
 
 
 class SessionResponse(Model, BaseDto):
-    receiver_id: ID_TYPE
+    reciever_id: ID_TYPE
     location_id: ID_TYPE
     kit_id: ID_TYPE
     status: SessionStatus
@@ -32,7 +32,7 @@ class SessionPageResponse(Page[SessionResponse]): ...
 
 
 class SessionFilters(BaseModel):
-    receiver_id: int | None = None
+    reciever_id: int | None = None
     location_id: int | None = None
     kit_id: int | None = None
     status: SessionStatus | None = None
@@ -43,7 +43,7 @@ class SessionFilters(BaseModel):
 
 
 def session_filters(
-    receiver_id: Annotated[int | None, Query()] = None,
+    reciever_id: Annotated[int | None, Query()] = None,
     location_id: Annotated[int | None, Query()] = None,
     kit_id: Annotated[int | None, Query()] = None,
     status: Annotated[SessionStatus | None, Query()] = None,
@@ -53,7 +53,7 @@ def session_filters(
     returned_to: Annotated[str | None, Query()] = None,
 ) -> SessionFilters:
     return SessionFilters(
-        receiver_id=receiver_id,
+        reciever_id=reciever_id,
         location_id=location_id,
         kit_id=kit_id,
         status=status,
@@ -68,13 +68,13 @@ SessionFiltersDep = Annotated[SessionFilters, Depends(session_filters)]
 
 
 class SessionCreateDto(BaseModel):
-    receiver_id: int
+    reciever_id: int
     location_id: int
     kit_id: int
 
 
 class SessionUpdateDto(Model):
-    receiver_id: int | None = None
+    reciever_id: int | None = None
     location_id: int | None = None
     kit_id: int | None = None
     status: SessionStatus | None = None

@@ -45,7 +45,7 @@ class Employee(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(30))
 
     reciever_sessions: Mapped[list["Session"]] = relationship(
-        back_populates="receiver", foreign_keys="Session.reciever_id"
+        back_populates="reciever", foreign_keys="Session.reciever_id"
     )
     giver_sessions: Mapped[list["Session"]] = relationship(
         back_populates="giver", foreign_keys="Session.giver_id"
@@ -82,7 +82,7 @@ class Session(TimestampMixin, Base):
     given_image_key: Mapped[str] = mapped_column(String(), nullable=True)
     returned_image_key: Mapped[str] = mapped_column(String(), nullable=True)
 
-    receiver: Mapped["Employee"] = relationship(
+    reciever: Mapped["Employee"] = relationship(
         back_populates="reciever_sessions",
         foreign_keys=[reciever_id],
     )

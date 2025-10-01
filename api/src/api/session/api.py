@@ -37,13 +37,13 @@ async def get_session_details(
 async def initialize_session(
     service: SessionServiceDep,
     recognize_service: RecognizeServiceDep,
-    receiver_id: Annotated[int, Form()],
+    reciever_id: Annotated[int, Form()],
     location_id: Annotated[int, Form()],
     kit_id: Annotated[int, Form()],
     image: Annotated[UploadFile, File()],
 ):
     session_data = SessionCreateDto(
-        receiver_id=receiver_id,
+        reciever_id=reciever_id,
         location_id=location_id,
         kit_id=kit_id,
     )

@@ -1,7 +1,9 @@
 import asyncio
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, FastAPI
+from src.storage import get_s3_storage
 import sys
 
 from src.api import (
@@ -13,16 +15,6 @@ from src.api import (
 )
 from src.database import seed
 from src.core import SETTINGS
-
-app = FastAPI(title="Tools stacktaking control app", version="0.0.1")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 def include_routers(app: FastAPI, *routers: APIRouter) -> None:
@@ -46,13 +38,33 @@ def run_tests():
     print("All tests passed!")
 
 
-include_routers(
-    app,
-    employee_router,
-    session_router,
-    tool_router,
-    kit_router,
-    location_router,
+@asynccontextmanager
+async def lifespan(app):
+    try:
+        await seed()
+        s3_service = get_s3_storage()
+        await s3_service.init_bucket()
+        include_routers(
+            app,
+            employee_router,
+            session_router,
+            tool_router,
+            kit_router,
+            location_router,
+        )
+
+    except Exception as e:
+        print(f"Warning: Could not startup: {e}")
+    yield
+
+
+app = FastAPI(title="Tools stacktaking control app", version="0.0.1", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -66,8 +78,6 @@ def main():
 
     if SETTINGS.test:
         run_tests()
-
-    asyncio.run(seed())
 
     uvicorn.run(
         "main:app",

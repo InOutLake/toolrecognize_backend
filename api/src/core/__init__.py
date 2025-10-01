@@ -8,19 +8,17 @@ from .schemes import (
     ID_TYPE,
     PageRequestDep,
 )
-from .repository import AsyncRepository
-from .repository_s3 import AsyncS3Repository, AsyncS3RepositoryDep
+from .repository import AsyncRepository, ModelT
 
 __all__ = [
     "SETTINGS",
     "AsyncRepository",
-    "AsyncS3Repository",
     "BaseDto",
     "DtoModel",
     "Model",
     "Page",
     "PageRequest",
-    "AsyncS3RepositoryDep",
     "ID_TYPE",
     "PageRequestDep",
+    "ModelT",
 ]

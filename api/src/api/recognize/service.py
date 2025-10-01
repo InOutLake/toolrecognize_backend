@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Protocol
 from fastapi import Depends
 
 
@@ -36,7 +36,7 @@ class RecognizeService:
         self.api_url = SETTINGS.recognize_api_url
         self.api_key = SETTINGS.recognize_api_key
 
-    async def analyze(self, image: bytes) -> DetectResponse:
+    async def recognize(self, image: bytes) -> DetectResponse:
         headers = {"Authorization": f"Bearer {self.api_key}"}
         files = {"file": ("image.jpg", image, "image/jpeg")}
         async with httpx.AsyncClient() as client:
@@ -51,7 +51,7 @@ class ReService:
         self.api_url = SETTINGS.recognize_api_url
         self.api_key = SETTINGS.recognize_api_key
 
-    async def analyze(self, image: bytes) -> DetectResponse:
+    async def recognize(self, image: bytes) -> DetectResponse:
         headers = {"Authorization": f"Bearer {self.api_key}"}
         files = {"file": ("image.jpg", image, "image/jpeg")}
         async with httpx.AsyncClient() as client:

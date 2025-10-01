@@ -45,8 +45,7 @@ class Settings(BaseSettings):
     recognize_api_url: str = "http://recognize:8000/detect"
     recognize_api_key: str = "some_secret_key"
 
-    tools_mapping_str: str = '{"1":"1"}'
-    tools_mapping: dict[int, int] = json.loads(tools_mapping_str)
+    tools_mapping_str: str = '{"1":1}'
 
     debug: int = 0
     test: int = 0
@@ -54,6 +53,11 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+
+    @property
+    def tools_mapping(self) -> dict[int, int]:
+        tools_mapping = json.loads(self.tools_mapping_str)
+        return {int(key): value for key, value in tools_mapping.items()}
 
     class Config:
         env_file = "local.env"
