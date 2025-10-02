@@ -9,6 +9,7 @@ from .schemes import (
     PageRequestDep,
 )
 from .repository import AsyncRepository, ModelT
+from .broker import BrokerDep, get_broker
 
 __all__ = [
     "SETTINGS",
@@ -21,4 +22,6 @@ __all__ = [
     "ID_TYPE",
     "PageRequestDep",
     "ModelT",
+    "BrokerDep",
+    "get_broker",
 ]

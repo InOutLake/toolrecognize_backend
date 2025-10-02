@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from src.api.recognize import RecognizeServiceDep
 
@@ -48,7 +48,12 @@ async def initialize_session(
         kit_id=kit_id,
     )
     image_data = await image.read()
-    tools_recognized = await recognize_service.recognize(image_data)
+    tools_recognized = (await recognize_service.recognize([image_data]))[0]
+    if not tools_recognized.success:
+        raise HTTPException(
+            status_code=500,
+            detail="Recognition service error, try again in a few minutes",
+        )
     return await service.initialize_session(
         session_data=session_data,
         image_recognized=image_data,
@@ -72,7 +77,12 @@ async def preclose_session(
     image: Annotated[UploadFile, File()],
 ):
     image_data = await image.read()
-    tools_recognized = await recognize_service.recognize(image_data)
+    tools_recognized = (await recognize_service.recognize([image_data]))[0]
+    if not tools_recognized.success:
+        raise HTTPException(
+            status_code=500,
+            detail="Recognition service error, try again in a few minutes",
+        )
 
     return await service.session_preclose(
         session_id=session_id,

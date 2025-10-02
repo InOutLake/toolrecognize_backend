@@ -12,6 +12,7 @@ dependencies = [
   "pytest>=8.4.2",
   "torchaudio>=2.8.0",
   "python-multipart>=0.0.20",
+  "faststream[rabbit]>=0.5.48",
 ]
 
 [tool.pyright]

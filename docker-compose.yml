@@ -28,8 +28,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      # rabbitmq:
-      #   condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   recognize:
     build:
@@ -48,25 +48,13 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - NVIDIA_VISIBLE_DEVICES=all
+      - RABBIT_URL=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}/
     ports:
       - "${RECOGNIZE_APP_PORT:-8001}:8000"
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
 
-
-  # celery_worker:
-  #   build:
-  #     context: ./recognize
-  #     dockerfile: Dockerfile
-  #   env_file:
-  #     - local.env
-  #   command: sh -c "uv run celery -A ${CELERY_APP} worker --loglevel=${CELERY_LOGLEVEL:-info} --concurrency=${CELERY_CONCURRENCY:-1}"
-  #   depends_on:
-  #     migrate:
-  #       condition: service_completed_successfully
-  #     rabbitmq:
-  #       condition: service_healthy
 
   postgres:
     image: postgres:16-alpine
@@ -90,21 +78,21 @@ services:
     ports:
       - 8080:8080
 
-  # rabbitmq:
-  #   image: rabbitmq:3.13-management-alpine
-  #   environment:
-  #     - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-  #     - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-  #   ports:
-  #     - "${RABBITMQ_PORT:-5672}:5672"
-  #     - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-  #   volumes:
-  #     - rabbitmq_data:/var/lib/rabbitmq
-  #   healthcheck:
-  #     test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 10
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   minio:
     image: minio/minio:latest
@@ -125,7 +113,5 @@ services:
 
 volumes:
   pg_data:
-  # rabbitmq_data:
+  rabbitmq_data:
   minio_data:
-
-

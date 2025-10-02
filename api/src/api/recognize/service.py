@@ -2,9 +2,8 @@ from typing import Annotated, Protocol
 from fastapi import Depends
 
 
-import httpx
-from src.core import SETTINGS
-from .schemes import DetectResponse, Detection, DetectionBBox, ImageInfo
+from .repository import RecognizeRepositoryDep, RecognizeRepositoryProtocol
+from .schemes import DetectResponse, Detection, DetectionBBox
 
 
 class RecognizeServiceMock:
@@ -23,31 +22,22 @@ class RecognizeServiceMock:
                 bbox=DetectionBBox(x1=30, y1=40, x2=130, y2=140),
             ),
         ]
-        image_info = ImageInfo(width=640, height=480, mode="RGB")
         return DetectResponse(
             detections=detections,
             total_detections=len(detections),
-            image_info=image_info,
         )
 
 
 class RecognizeService:
-    def __init__(self):
-        self.api_url = SETTINGS.recognize_api_url
-        self.api_key = SETTINGS.recognize_api_key
+    def __init__(self, repository: RecognizeRepositoryProtocol):
+        self._repository = repository
 
-    async def recognize(self, image: bytes) -> DetectResponse:
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        files = {"file": ("image.jpg", image, "image/jpeg")}
-        async with httpx.AsyncClient() as client:
-            response = await client.post(self.api_url, headers=headers, files=files)
-            response.raise_for_status()
-
-        return DetectResponse(**response.json())
+    async def recognize(self, images: list[bytes]) -> list[DetectResponse]:
+        return await self._repository.recognize(images)
 
 
-def get_recognize_service():
-    return RecognizeService()
+def get_recognize_service(repository: RecognizeRepositoryDep):
+    return RecognizeService(repository)
 
 
 RecognizeServiceDep = Annotated[RecognizeService, Depends(get_recognize_service)]

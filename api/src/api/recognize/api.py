@@ -11,6 +11,7 @@ router = APIRouter(prefix="/recognize", tags=["recognize"])
 @router.post("/", response_model=list[DetectResponse])
 async def recognize(
     recognize_service: RecognizeServiceDep,
-    image: list[UploadFile],
+    images: list[UploadFile],
 ) -> list[DetectResponse]:
-    return [await recognize_service.recognize(await img.read()) for img in image]
+    images_bytes = [await img.read() for img in images]
+    return await recognize_service.recognize(images_bytes)

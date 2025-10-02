@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     rabbitmq_default_pass: str = "guest"
     rabbitmq_port: int = 5672
     rabbitmq_management_port: int = 15672
+    rabbitmq_host: str = "localhost"
 
     # MinIO
     minio_root_user: str = "minioadmin"
@@ -44,6 +45,7 @@ class Settings(BaseSettings):
     # Analyze service
     recognize_api_url: str = "http://recognize:8000/detect"
     recognize_api_key: str = "some_secret_key"
+    recognize_app_mode: str = "amqp"
 
     tools_mapping_str: str = '{"1":1}'
 
@@ -53,6 +55,10 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+
+    @property
+    def rabbit_url(self) -> str:
+        return f"amqp://{self.rabbitmq_default_user}:{self.rabbitmq_default_pass}@{self.rabbitmq_host}:{self.rabbitmq_port}"
 
     @property
     def tools_mapping(self) -> dict[int, int]:

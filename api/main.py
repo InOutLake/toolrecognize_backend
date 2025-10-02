@@ -1,9 +1,9 @@
-import asyncio
 from contextlib import asynccontextmanager
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, FastAPI
 from src.storage import get_s3_storage
+from src.core import get_broker
 import sys
 
 from src.api import (
@@ -45,6 +45,8 @@ async def lifespan(app):
         await seed()
         s3_service = get_s3_storage()
         await s3_service.init_bucket()
+        if SETTINGS.recognize_app_mode == "amqp":
+            await get_broker().start()
 
     except Exception as e:
         print(f"Warning: Could not startup: {e}")
