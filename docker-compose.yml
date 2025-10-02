@@ -55,7 +55,6 @@ services:
       rabbitmq:
         condition: service_healthy
 
-
   postgres:
     image: postgres:16-alpine
     environment:
@@ -84,9 +83,10 @@ services:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
+      - "5672:5672"
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     volumes:
+      - .configs/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
