@@ -12,6 +12,7 @@ from src.api import (
     tool_router,
     kit_router,
     location_router,
+    recognize_router,
 )
 from src.database import seed
 from src.core import SETTINGS
@@ -51,6 +52,7 @@ async def lifespan(app):
             tool_router,
             kit_router,
             location_router,
+            recognize_router,
         )
 
     except Exception as e:

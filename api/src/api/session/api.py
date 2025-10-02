@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 
 from src.api.recognize import RecognizeServiceDep
 
@@ -67,12 +67,12 @@ async def open_session(
 @router.post("/{session_id}/preclose", response_model=SessionDetailsResponse)
 async def preclose_session(
     session_id: ID_TYPE,
-    analyze_service: RecognizeServiceDep,
+    recognize_service: RecognizeServiceDep,
     service: SessionServiceDep,
     image: Annotated[UploadFile, File()],
 ):
     image_data = await image.read()
-    tools_recognized = analyze_service.recognize(image_data)
+    tools_recognized = await recognize_service.recognize(image_data)
 
     return await service.session_preclose(
         session_id=session_id,
