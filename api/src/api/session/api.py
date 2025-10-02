@@ -54,9 +54,12 @@ async def initialize_session(
             status_code=500,
             detail="Recognition service error, try again in a few minutes",
         )
+    image_drawn_boxes = recognize_service.draw_boxes(
+        image_data, tools_recognized.detections
+    )
     return await service.initialize_session(
         session_data=session_data,
-        image_recognized=image_data,
+        image_recognized=image_drawn_boxes,
         detections=tools_recognized.detections,
     )
 
@@ -84,9 +87,13 @@ async def preclose_session(
             detail="Recognition service error, try again in a few minutes",
         )
 
+    image_drawn_boxes = recognize_service.draw_boxes(
+        image_data, tools_recognized.detections
+    )
+
     return await service.session_preclose(
         session_id=session_id,
-        image_recognized=image_data,
+        image_recognized=image_drawn_boxes,
         detections=tools_recognized.detections,
     )
 
