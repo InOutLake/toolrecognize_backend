@@ -45,15 +45,6 @@ async def lifespan(app):
         await seed()
         s3_service = get_s3_storage()
         await s3_service.init_bucket()
-        include_routers(
-            app,
-            employee_router,
-            session_router,
-            tool_router,
-            kit_router,
-            location_router,
-            recognize_router,
-        )
 
     except Exception as e:
         print(f"Warning: Could not startup: {e}")
@@ -67,6 +58,17 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# there is a bug and routers cannot be added nor in init lifespan function nor in main due to it
+include_routers(
+    app,
+    employee_router,
+    session_router,
+    tool_router,
+    kit_router,
+    location_router,
+    recognize_router,
 )
 
 
