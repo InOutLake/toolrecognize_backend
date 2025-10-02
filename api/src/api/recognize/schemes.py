@@ -23,3 +23,7 @@ class DetectResponse(BaseModel):
 
 class DetectRequest(BaseModel):
     image_bytes: str
+
+
+class DetectResponseWithImage(DetectResponse):
+    image: str
