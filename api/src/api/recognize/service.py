@@ -52,7 +52,7 @@ class RecognizeService:
         for det in detections:
             box = det.bbox
             x1, y1, x2, y2 = box.x1, box.y1, box.x2, box.y2
-            label = f"{det.class_name} {det.confidence:.2f}"
+            label = f"{det.class_id}: {det.class_name} {det.confidence:.2f}"
 
             # Box
             draw.rectangle([(x1, y1), (x2, y2)], outline="red", width=3)
