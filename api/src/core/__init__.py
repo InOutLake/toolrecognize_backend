@@ -10,6 +10,7 @@ from .schemes import (
 )
 from .repository import AsyncRepository, ModelT
 from .broker import BrokerDep, get_broker
+from .domain import Domain
 
 __all__ = [
     "SETTINGS",
@@ -24,4 +25,5 @@ __all__ = [
     "ModelT",
     "BrokerDep",
     "get_broker",
+    "Domain",
 ]

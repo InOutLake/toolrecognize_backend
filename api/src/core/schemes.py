@@ -29,7 +29,7 @@ class Page[T](BaseModel):
     total: int
 
 
-class PageRequest(BaseModel):
+class PageParams(BaseModel):
     page_number: int
     page_size: int
 
@@ -41,8 +41,8 @@ class PageRequest(BaseModel):
 def pagerequest(
     page_number: Annotated[int, Query(ge=1, le=2**32)] = 1,
     page_size: Annotated[int, Query(ge=1, le=1000)] = 10,
-) -> PageRequest:
-    return PageRequest(page_number=page_number, page_size=page_size)
+) -> PageParams:
+    return PageParams(page_number=page_number, page_size=page_size)
 
 
-PageRequestDep = Annotated[PageRequest, Depends(pagerequest)]
+PageRequestDep = Annotated[PageParams, Depends(pagerequest)]
