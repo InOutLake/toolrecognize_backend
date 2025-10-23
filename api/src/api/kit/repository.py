@@ -2,11 +2,11 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.exc import NoResultFound
 
-from src.core import AsyncRepository
+from src.core import AsyncAlchemyRepository
 from src.database import DbSessionDep, Kit, ID_TYPE
 
 
-class KitRepository(AsyncRepository[Kit]):
+class KitRepository(AsyncAlchemyRepository[Kit]):
     async def get_kit_tools(self, kit_id: ID_TYPE):
         kit = await self.get_one(filters={"id": kit_id})
         if kit is None:

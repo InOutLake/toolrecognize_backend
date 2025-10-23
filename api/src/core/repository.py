@@ -6,42 +6,106 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Protocol,
     Sequence,
-    Tuple,
     Type,
     TypeVar,
 )
 
-from sqlalchemy import Select, case, delete, func, inspect, select, update
+from sqlalchemy import Select, String, case, delete, func, inspect, select, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.exc import NoResultFound
 
-ModelT = TypeVar("ModelT", bound=DeclarativeBase)
+from .schemes import Page, PageParams
+from .domain import DomainModelT
+
+DatabaseModel = TypeVar("DatabaseModel", bound=Any, covariant=True)
 
 
-class AsyncRepository(Generic[ModelT]):
-    def __init__(self, model: Type[ModelT], session: AsyncSession) -> None:
-        self.model: Type[ModelT] = model
+class AsyncRepositoryProtocol(Protocol[DomainModelT, DatabaseModel]):
+    """Basic CRUD operations for database"""
+
+    def __init__(
+        self,
+        domain_model: Type[DomainModelT],
+        database_model: Type[DatabaseModel],
+        session: Any,
+    ) -> None: ...
+
+    async def get_list(
+        self,
+        *,
+        filters: Mapping[str, Any] | None = None,
+        extra_filters: Sequence[Any] | None = None,
+        order_by: Sequence[Any] | None = None,
+        page: PageParams,
+    ) -> Page[DomainModelT]: ...
+
+    async def create(self, data: list[Mapping[str, Any]]) -> list[DomainModelT]: ...
+
+    async def get_one(
+        self,
+        *,
+        filters: Mapping[str, Any] | None = None,
+        extra_filters: Sequence[Any] | None = None,
+    ) -> DomainModelT | None: ...
+
+    async def update(
+        self,
+        updates: list[tuple[Any, Mapping[str, Any]]],
+    ) -> list[DomainModelT]: ...
+
+    async def delete(self, ids: list[Any]) -> bool: ...
+
+
+SqlAlchemyModel = TypeVar("SqlAlchemyModel", bound=DeclarativeBase, covariant=True)
+
+
+class AsyncAlchemyRepository(AsyncRepositoryProtocol[DomainModelT, SqlAlchemyModel]):
+    """Basic CRUD operationss utilizing async sqlalchemy library"""
+
+    def __init__(
+        self,
+        domain_model: Type[DomainModelT],
+        database_model: Type[SqlAlchemyModel],
+        session: AsyncSession,
+    ) -> None:
+        self.database_model: Type[SqlAlchemyModel] = database_model
+        self.domain_model: Type[DomainModelT] = domain_model
         self.session: AsyncSession = session
 
     def _build_select(
         self,
-        filters: Optional[Mapping[str, Any]] = None,
-        extra_filters: Optional[Sequence[Any]] = None,
-        order_by: Optional[Sequence[Any]] = None,
-    ) -> Select[tuple[ModelT]]:
-        stmt: Select[tuple[ModelT]] = select(self.model)
+        filters: Mapping[str, Any] | None = None,
+        extra_filters: Sequence[Any] | None = None,
+        order_by: Sequence[Any] | None = None,
+    ) -> Select[tuple[SqlAlchemyModel]]:
+        """
+        All the types besides `string` in filters are being compared with `equal` query.
+        Strings filters applied with `lilike` query.
+        """
+        stmt: Select[tuple[SqlAlchemyModel]] = select(self.database_model)
 
         if filters:
             for field_name, value in filters.items():
-                if value is not None:
-                    column = getattr(self.model, field_name, None)
-                    if column is None:
-                        raise AttributeError(
-                            f"Model {self.model.__name__} has no column '{field_name}'"
-                        )
+                if value is None:
+                    continue
+
+                column = getattr(self.database_model, field_name, None)
+                if column is None:
+                    raise AttributeError(
+                        f"Model {self.database_model.__name__} has no column '{field_name}'"
+                    )
+
+                column_type = getattr(column, "type", None)
+                is_string_col = column_type is not None and isinstance(
+                    column_type, String
+                )
+
+                if is_string_col and isinstance(value, str):
+                    stmt = stmt.where(column.ilike(f"%{value}%"))
+                else:
                     stmt = stmt.where(column == value)
 
         if extra_filters:
@@ -51,21 +115,21 @@ class AsyncRepository(Generic[ModelT]):
         if order_by and len(order_by) > 0:
             stmt = stmt.order_by(*order_by)
         else:
-            pk_cols = inspect(self.model).primary_key
+            pk_cols = inspect(self.database_model).primary_key
             if pk_cols:
                 stmt = stmt.order_by(*pk_cols)
 
         return stmt
 
-    async def list(
+    async def get_list(
         self,
         *,
-        filters: Optional[Mapping[str, Any]] = None,
-        extra_filters: Optional[Sequence[Any]] = None,
-        order_by: Optional[Sequence[Any]] = None,
-        limit: int = 50,
-        offset: int = 0,
-    ) -> Tuple[List[ModelT], int]:
+        filters: Mapping[str, Any] | None = None,
+        extra_filters: Sequence[Any] | None = None,
+        order_by: Sequence[Any] | None = None,
+        page: PageParams,
+    ) -> Page[DomainModelT]:
+        """Extra filters and order_by functionality is not implemented"""
         base_stmt = self._build_select(
             filters=filters, extra_filters=extra_filters, order_by=order_by
         )
@@ -76,67 +140,46 @@ class AsyncRepository(Generic[ModelT]):
         count_result: Result = await self.session.execute(count_stmt)
         total: int = int(count_result.scalar_one())
 
-        page_stmt = base_stmt.limit(limit).offset(offset)
-        result: Result = await self.session.execute(page_stmt)
-        items: List[ModelT] = list(result.scalars().all())
-        return items, total
+        page_stmt = base_stmt.limit(page.page_size).offset(page.offset)
+        result = await self.session.execute(page_stmt)
+        rows: List[SqlAlchemyModel] = list(result.scalars().all())
+        items: List[DomainModelT] = list(
+            [self.domain_model.model_validate(row) for row in rows]
+        )
+        return Page(items=items, total=total, **page.model_dump())
 
     async def get_one(
         self,
         *,
-        filters: Optional[Mapping[str, Any]] = None,
-        extra_filters: Optional[Sequence[Any]] = None,
-    ) -> Optional[ModelT]:
-        stmt = self._build_select(filters=filters, extra_filters=extra_filters)
-        stmt = stmt.limit(1)
-        result: Result = await self.session.execute(stmt)
-        return result.scalars().first()
-
-    async def create(self, data: Mapping[str, Any]) -> ModelT:
-        obj = self.model(**dict(data))
-        self.session.add(obj)
-        await self.session.flush()
-        await self.session.refresh(obj)
-        await self.session.commit()
-        return obj
-
-    async def create_many(self, data: list[ModelT]) -> list[ModelT]:
-        self.session.add_all(data)
-        await self.session.flush()
-        for row in data:
-            await self.session.refresh(row)
-        await self.session.commit()
-        return data
-
-    async def update(self, id_value: Any, data: Mapping[str, Any]) -> Optional[ModelT]:
-        pk_cols = inspect(self.model).primary_key
-        if len(pk_cols) != 1:
-            raise ValueError(
-                "update() supports models with a single-column primary key"
-            )
-        pk_col = pk_cols[0]
-
-        upd_stmt = (
-            update(self.model)
-            .where(pk_col == id_value)
-            .values(**dict(data))
-            .returning(self.model)
+        filters: Mapping[str, Any] | None = None,
+        extra_filters: Sequence[Any] | None = None,
+    ) -> DomainModelT | None:
+        page = await self.get_list(
+            filters=filters,
+            extra_filters=extra_filters,
+            page=PageParams(page_number=1, page_size=1),
         )
-        result: Result = await self.session.execute(upd_stmt)
-        obj = result.scalars().first()
-        if obj is None:
-            await self.session.rollback()
-            raise NoResultFound()
-        await self.session.commit()
-        return obj
+        if page.items:
+            return page.items[0]
+        return None
 
-    async def update_many(
-        self, updates: list[tuple[Any, Mapping[str, Any]]]
-    ) -> list[ModelT]:
+    async def create(self, data: list[Mapping[str, Any]]) -> list[DomainModelT]:
+        db_objects = [self.database_model(**item) for item in data]
+        self.session.add_all(db_objects)
+        await self.session.flush()
+        for obj in db_objects:
+            await self.session.refresh(obj)
+        await self.session.commit()
+        return [self.domain_model.model_validate(obj) for obj in db_objects]
+
+    async def update(
+        self,
+        updates: list[tuple[Any, Mapping[str, Any]]],
+    ) -> list[DomainModelT]:
         if not updates:
             return []
 
-        pk_cols = inspect(self.model).primary_key
+        pk_cols = inspect(self.database_model).primary_key
         if len(pk_cols) != 1:
             raise ValueError(
                 "update_many() supports models with a single-column primary key"
@@ -155,10 +198,10 @@ class AsyncRepository(Generic[ModelT]):
 
         case_when_clauses = {}
         for field_name, value_map in case_expressions.items():
-            column = getattr(self.model, field_name, None)
+            column = getattr(self.database_model, field_name, None)
             if column is None:
                 raise AttributeError(
-                    f"Model {self.model.__name__} has no column '{field_name}'"
+                    f"Model {self.database_model.__name__} has no column '{field_name}'"
                 )
 
             case_when_clauses[field_name] = case(
@@ -167,26 +210,26 @@ class AsyncRepository(Generic[ModelT]):
             )
 
         upd_stmt = (
-            update(self.model)
+            update(self.database_model)
             .where(pk_col.in_(id_values))
             .values(**case_when_clauses)
-            .returning(self.model)
+            .returning(self.database_model)
         )
 
         result = await self.session.execute(upd_stmt)
         updated_objects = list(result.scalars().all())
         await self.session.commit()
-        return updated_objects
+        return [self.domain_model.model_validate(row) for row in updated_objects]
 
-    async def delete(self, id_value: Any) -> bool:
-        pk_cols = inspect(self.model).primary_key
+    async def delete(self, ids: list[Any]) -> bool:
+        pk_cols = inspect(self.database_model).primary_key
         if len(pk_cols) != 1:
             raise ValueError(
                 "delete() supports models with a single-column primary key"
             )
         pk_col = pk_cols[0]
 
-        del_stmt = delete(self.model).where(pk_col == id_value)
+        del_stmt = delete(self.database_model).where(pk_col.in_(ids))
         result = await self.session.execute(del_stmt)
         await self.session.commit()
         return result.rowcount is not None and result.rowcount > 0

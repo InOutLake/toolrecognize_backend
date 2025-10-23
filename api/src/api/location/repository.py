@@ -1,10 +1,10 @@
 from typing import Annotated
 from fastapi import Depends
-from src.core import AsyncRepository
+from src.core import AsyncAlchemyRepository
 from src.database import DbSessionDep, Storage
 
 
-class LocationRepository(AsyncRepository[Storage]):
+class LocationRepository(AsyncAlchemyRepository[Storage]):
     pass
 
 

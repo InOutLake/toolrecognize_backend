@@ -3,33 +3,40 @@ from fastapi import Depends, Query
 from pydantic import BaseModel
 from src.core import BaseDto, Model, Page
 
+from src.core import CreateDto, UpdateDto, FiltersDto
 
-class EmployeeResponse(BaseDto, Model):
+
+class EmployeeResponse(BaseModel):
     name: str
 
 
 class EmployeePageResponse(Page[EmployeeResponse]): ...
 
 
-class EmployeeFilters(BaseModel):
+class EmployeeCreateDto(CreateDto):
+    name: str
+
+
+class EmployeeUpdate(BaseModel):
+    name: str | None = None
+
+
+class EmployeeUpdateDto(UpdateDto):
+    data: EmployeeUpdate
+
+
+class EmployeeFilters(FiltersDto):
     name: str | None = None
 
 
 def employee_filters(
+    id: Annotated[str | None, Query()] = None,
     name: Annotated[str | None, Query()] = None,
 ) -> EmployeeFilters:
-    return EmployeeFilters(name=name)
+    return EmployeeFilters(id=id, name=name)
 
 
 EmployeeFiltersDep = Annotated[EmployeeFilters, Depends(employee_filters)]
-
-
-class EmployeeCreateDto(BaseModel):
-    name: str
-
-
-class EmployeeUpdateDto(BaseModel):
-    name: str | None = None
 
 
 class EmployeeDeleteDto(Model): ...

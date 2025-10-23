@@ -2,7 +2,7 @@ from typing import Annotated, Any, Mapping, Optional, Sequence, override
 from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
-from src.core import AsyncRepository
+from src.core import AsyncAlchemyRepository
 from src.core import ID_TYPE
 from src.database.database import (
     DbSessionDep,
@@ -15,7 +15,7 @@ from src.database.database import (
 )
 
 
-class SessionRepository(AsyncRepository[Session]):
+class SessionRepository(AsyncAlchemyRepository[Session]):
     async def full_tools_info(self, session_id: ID_TYPE):
         stmt = (
             select(

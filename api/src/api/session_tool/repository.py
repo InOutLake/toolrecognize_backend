@@ -2,12 +2,12 @@ from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import delete
-from src.core.repository import AsyncRepository
+from src.core.repository import AsyncAlchemyRepository
 from src.core import ID_TYPE
 from src.database.database import DbSessionDep, SessionTool
 
 
-class SessionToolRepository(AsyncRepository[SessionTool]): ...
+class SessionToolRepository(AsyncAlchemyRepository[SessionTool]): ...
 
 
 def get_session_tool_repository(db_session: DbSessionDep) -> SessionToolRepository:
