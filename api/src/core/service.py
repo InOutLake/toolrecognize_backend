@@ -9,9 +9,7 @@ from pydantic import BaseModel
 class CreateDto(BaseModel): ...
 
 
-class UpdateDto(BaseModel):
-    id: Any
-    data: Any
+class UpdateDto(BaseModel): ...
 
 
 class FiltersDto(BaseModel):
@@ -28,7 +26,7 @@ T = TypeVar("T", bound=BaseModel)
 class CRUDAsyncServiceProtocol(
     Protocol[DomainModelT, CreateModelT, UpdateModelT, FiltersModelT]
 ):
-    """CRUD operations service protocol"""
+    """CRUD operations service protocol. Mixin to add basic CRUD interface for domain"""
 
     def __init__(self, repository: AsyncRepositoryProtocol) -> None: ...
 
@@ -41,9 +39,7 @@ class CRUDAsyncServiceProtocol(
         self, data: CreateModelT | list[CreateModelT]
     ) -> list[DomainModelT]: ...
 
-    async def update(
-        self, data: UpdateModelT | list[UpdateModelT]
-    ) -> list[DomainModelT]: ...
+    async def update(self, data: dict[Any, UpdateModelT]) -> list[DomainModelT]: ...
 
     async def delete(self, data: Any | list[Any]) -> bool: ...
 
@@ -92,10 +88,10 @@ class CRUDAsyncService(
         return await self._repository.create(self._serialize_data(data))
 
     async def update(
-        self, data: UpdateModelT | list[UpdateModelT]
+        self,
+        data: dict[Any, UpdateModelT],
     ) -> list[DomainModelT]:
-        data_unified = self._unify_to_list(data)
-        data_serialized = [(update.id, update.data) for update in data_unified]
+        data_serialized = [(id, update.model_dump()) for id, update in data]
         return await self._repository.update(data_serialized)
 
     async def delete(self, data: Any | list[Any]) -> bool:
