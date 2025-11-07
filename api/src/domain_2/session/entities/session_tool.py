@@ -1,4 +1,4 @@
-from domain.shared import ID_TYPE, Domain
+ domain.shared import ID_TYPE, Domain
 
 
 class SessionTool(Domain):

@@ -1,5 +1,7 @@
+from typing import Any
 from pydantic import BaseModel
- domain.shared import ID_TYPE
+
+ domain.shared import Domain
 
 
 class DetectionBBox(BaseModel):
@@ -9,8 +11,8 @@ class DetectionBBox(BaseModel):
     y2: float
 
 
-class Detection(BaseModel):
-    class_id: int
+class Detection(Domain):
+    class_id: Any
     class_name: str
     confidence: float
     bbox: DetectionBBox

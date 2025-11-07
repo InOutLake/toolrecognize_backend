@@ -2,9 +2,10 @@ from typing import Any, Protocol, TypeVar
 
 from pydantic import BaseModel
 
-from application.shared.dtos import CreateDto, FiltersDto, Page, PageParams, UpdateDto
+from application.shared.dtos import CreateDto, FiltersDto, UpdateDto
 from domain.shared import DomainModelT
-from infrastructure.repositories import RepositoryProtocol
+from shared.dtos.page import Page, PageParams
+from shared.interfaces.repository import RepositoryProtocol
 
 CreateModelT = TypeVar("CreateModelT", bound=CreateDto, covariant=True)
 UpdateModelT = TypeVar("UpdateModelT", bound=UpdateDto, covariant=True)
@@ -71,7 +72,7 @@ class CRUDService(
         page: PageParams,
     ) -> Page[DomainModelT]:
         filters_serialized = filters.model_dump() if filters else None
-        return await self._repository.get_list(
+        return await self._repository.get_page(
             filters=filters_serialized or None,
             page=page,
         )

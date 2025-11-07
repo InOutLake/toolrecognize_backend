@@ -1,7 +1,6 @@
 from typing import (
     Any,
     Mapping,
-    Protocol,
     Sequence,
     Type,
     TypeVar,
@@ -11,46 +10,12 @@ from sqlalchemy import Select, String, delete, func, inspect, select
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.shared import Page, PageParams
+from shared.dtos import Page, PageParams
 from domain.shared import DomainModelT
 from infrastructure.database import Base
+from shared.interfaces.repository import RepositoryProtocol
 
 DatabaseModelT = TypeVar("DatabaseModelT", bound=Any)
-
-
-class RepositoryProtocol(Protocol[DomainModelT, DatabaseModelT]):
-    """Basic CRUD operations for database"""
-
-    def __init__(
-        self,
-        domain_model: Type[DomainModelT],
-        database_model: Type[DatabaseModelT],
-        session: Any,
-    ) -> None: ...
-
-    async def to_orm(self, data: list[DomainModelT]) -> list[DatabaseModelT]: ...
-
-    async def to_domain(self, data: list[DatabaseModelT]) -> list[DomainModelT]: ...
-
-    async def get_list(
-        self,
-        *,
-        filters: Mapping[str, Any] | None = None,
-        extra_filters: Sequence[Any] | None = None,
-        order_by: Sequence[Any] | None = None,
-        page: PageParams,
-    ) -> Page[DomainModelT]: ...
-
-    async def save(self, data: list[DomainModelT]) -> list[DomainModelT]: ...
-
-    async def get_one(
-        self,
-        *,
-        filters: Mapping[str, Any] | None = None,
-        extra_filters: Sequence[Any] | None = None,
-    ) -> DomainModelT | None: ...
-
-    async def delete(self, ids: list[Any]) -> bool: ...
 
 
 SqlAlchemyModelT = TypeVar("SqlAlchemyModelT", bound=Base)
@@ -128,7 +93,7 @@ class SqlAlchemyRepository(RepositoryProtocol[DomainModelT, SqlAlchemyModelT]):
 
         return stmt
 
-    async def get_list(
+    async def get_page(
         self,
         *,
         filters: Mapping[str, Any] | None = None,
@@ -159,7 +124,7 @@ class SqlAlchemyRepository(RepositoryProtocol[DomainModelT, SqlAlchemyModelT]):
         filters: Mapping[str, Any] | None = None,
         extra_filters: Sequence[Any] | None = None,
     ) -> DomainModelT | None:
-        page = await self.get_list(
+        page = await self.get_page(
             filters=filters,
             extra_filters=extra_filters,
             page=PageParams(page_number=1, page_size=1),

@@ -1,17 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 
 from application.session.dtos import (
     SessionCreateDto,
     SessionDetailsResponse,
     SessionFiltersDep,
-    SessionPageResponse,
     SessionResponse,
 )
 from application.session.service import SessionServiceDep
-from application.shared.dtos import Page
-from application.shared import PageRequestDep
+from shared.dtos.page import Page, PageRequestDep
 from domain.session.entities.session import Session
 from domain.shared import ID_TYPE
 

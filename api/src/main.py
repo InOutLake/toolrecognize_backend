@@ -2,20 +2,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, FastAPI
-from src.storage import get_s3_storage
-from src.core import get_broker
+from infrastructure.repositories.broker import get_broker
 import sys
 
-from src.api import (
-    employee_router,
-    session_router,
-    tool_router,
-    kit_router,
-    location_router,
-    recognize_router,
-)
-from src.database import seed
-from src.core import SETTINGS
+from presentation.api import session_router
+from core import SETTINGS
 
 
 def include_routers(app: FastAPI, *routers: APIRouter) -> None:
@@ -42,9 +33,6 @@ def run_tests():
 @asynccontextmanager
 async def lifespan(app):
     try:
-        await seed()
-        s3_service = get_s3_storage()
-        await s3_service.init_bucket()
         if SETTINGS.recognize_app_mode == "amqp":
             await get_broker().start()
 
@@ -65,12 +53,7 @@ app.add_middleware(
 # there is a bug and routers cannot be added nor in init lifespan function nor in main due to it
 include_routers(
     app,
-    employee_router,
     session_router,
-    tool_router,
-    kit_router,
-    location_router,
-    recognize_router,
 )
 
 

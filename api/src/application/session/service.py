@@ -33,7 +33,7 @@ class SessionServiceProtocol(
         session_repository: SessionRepositoryProtocol,
         s3_repository: S3RepositoryProtocol,
         recognition_service: RecognitionServiceProtocol,
-        detections_mapper: ...,
+        detections_mapper: DetectionToolMapper,
     ) -> None: ...
 
     async def initialize_session(
@@ -66,13 +66,13 @@ class SessionService(
         recognition_service: RecognitionServiceProtocol,
         detections_mapper: DetectionToolMapper,
     ) -> None:
-        self._session_repository = session_repository
+        self._repository = session_repository
         self._s3_repository = s3_repository
         self._recognition_service = recognition_service
         self._detections_mapper = detections_mapper
 
     async def get_one_or_raise(self, session_id: ID_TYPE):
-        entity = await self._session_repository.get_one(filters={"id": session_id})
+        entity = await self._repository.get_one(filters={"id": session_id})
         if not entity:
             raise SessionNotFoundException()
         return Session.model_validate(entity, from_attributes=True)
@@ -90,13 +90,13 @@ class SessionService(
             data=image,
         )
         session.preopen(key, tools_recognized)
-        session = (await self._session_repository.save([session]))[0]
+        session = (await self._repository.save([session]))[0]
         return session
 
     async def session_open(self, session_id: ID_TYPE) -> Session:
         session = await self.get_one_or_raise(session_id)
         session.open()
-        session = (await self._session_repository.save([session]))[0]
+        session = (await self._repository.save([session]))[0]
         return session
 
     async def session_preclose(
@@ -112,13 +112,13 @@ class SessionService(
             data=image,
         )
         session.preclose(key, tools_recognized)
-        session = (await self._session_repository.save([session]))[0]
+        session = (await self._repository.save([session]))[0]
         return session
 
     async def session_close(self, session_id) -> Session:
         session = await self.get_one_or_raise(session_id)
         session.close()
-        session = (await self._session_repository.save([session]))[0]
+        session = (await self._repository.save([session]))[0]
         return session
 
 

@@ -17,6 +17,6 @@ COPY . .
 
 EXPOSE 5678 8000
 
-CMD ["uv", "run", "main.py"]
+CMD ["uv", "run", "src/main.py"]
 
 

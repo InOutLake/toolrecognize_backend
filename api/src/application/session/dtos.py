@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import Depends, Query
 from pydantic import BaseModel, ConfigDict
 
-from application.shared.dtos import CreateDto, FiltersDto, UpdateDto, ResponseDto
-from application.shared import Page
+from application.shared.dtos import CreateDto, FiltersDto, ResponseDto, UpdateDto
 from domain.session import SessionStatus
 from domain.shared import ID_TYPE
+from shared.dtos import Page
 
 
 class SessionResponse(ResponseDto):

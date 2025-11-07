@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from src.domain.recognition import Detection
+from domain.recognition import Detection
 
 
 class DetectResponse(BaseModel):

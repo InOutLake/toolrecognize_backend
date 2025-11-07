@@ -9,9 +9,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from domain.shared import ID_TYPE
 from domain.session import SessionStatus
 
-from src.core import SETTINGS
+from core import SETTINGS
 
-DB_ID_TYPE = Mapped[ID_TYPE]
+DB_ID_TYPE = Mapped[ID_TYPE]  # uuid, probably never change
 
 
 class TimestampMixin:
@@ -35,7 +35,9 @@ class Base(DeclarativeBase):
 class Employee(TimestampMixin, Base):
     __tablename__ = "employee"
 
-    name: Mapped[str] = mapped_column(String(30))
+    first_name: Mapped[str] = mapped_column(String(30))
+    last_name: Mapped[str] = mapped_column(String(30))
+    email: Mapped[str] = mapped_column(String(30))
 
     reciever_sessions: Mapped[list["Session"]] = relationship(
         back_populates="reciever", foreign_keys="Session.reciever_id"

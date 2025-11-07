@@ -3,9 +3,10 @@ from fastapi import Depends
 from sqlalchemy import Select
 
 from sqlalchemy.orm import selectinload
-from src.infrastructure.database import Session as SessionDB, DbSessionDep
+from infrastructure.database import Session as SessionDB, DbSessionDep
 from domain.session import Session
-from .repository import RepositoryProtocol, SqlAlchemyRepository
+from shared.interfaces.repository import RepositoryProtocol
+from .sqlalchemy_repository import SqlAlchemyRepository
 from .session_tool import SessionToolRepositoryProtocol, SessionToolRepositoryDep
 
 

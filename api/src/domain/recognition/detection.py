@@ -1,7 +1,7 @@
 from typing import Any
 from pydantic import BaseModel
 
-from src.domain.shared import Domain
+from domain.shared import Domain
 
 
 class DetectionBBox(BaseModel):

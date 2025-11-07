@@ -6,8 +6,9 @@ import httpx
 from fastapi import Depends
 from faststream.rabbit import RabbitBroker
 
-from src.core import SETTINGS, BrokerDep
-from src.domain.recognition import Detection
+from core import SETTINGS
+from domain.recognition import Detection
+from infrastructure.repositories.broker import BrokerDep
 
 from .dtos import DetectRequest, DetectResponse
 

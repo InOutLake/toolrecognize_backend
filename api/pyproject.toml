@@ -24,3 +24,17 @@ dependencies = [
 venvPath = "."
 venv = ".venv"
 extraPaths = ["./src"]
+
+[tool.mypy]
+packages = ["api"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+ignore_missing_imports = true
+explicit_package_bases = true
+warn_unreachable = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_redundant_casts = true
+incremental = true
+show_error_codes = true
+pretty = true

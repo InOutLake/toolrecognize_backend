@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from domain.shared import ID_TYPE, Domain
 from pydantic import ConfigDict, Field
-from domain.session.value_objects.session_status import SessionStatus
+from domain.session import SessionStatus
 from .session_tool import SessionTool
 from domain.session import ToolQuantity
 

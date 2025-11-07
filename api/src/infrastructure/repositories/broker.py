@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from src.core import SETTINGS
+from core import SETTINGS
 from faststream.rabbit import RabbitBroker
 
 broker = RabbitBroker(SETTINGS.rabbit_url)

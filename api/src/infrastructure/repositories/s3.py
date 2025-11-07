@@ -6,7 +6,7 @@ import aioboto3
 from botocore.utils import ClientError
 from fastapi import Depends
 
-from src.core import SETTINGS
+from core import SETTINGS
 
 
 class S3RepositoryProtocol(Protocol):

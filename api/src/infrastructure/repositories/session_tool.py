@@ -1,17 +1,22 @@
 from typing import Annotated
+
 from fastapi import Depends
 from sqlalchemy import func, select
-from src.infrastructure.database import (
-    Session as SessionDB,
+
+from domain.session import Session, SessionTool
+from domain.shared import ID_TYPE
+from infrastructure.repositories.sqlalchemy_repository import SqlAlchemyRepository
+from shared.interfaces.repository import RepositoryProtocol
+from infrastructure.database import (
     DbSessionDep,
     Kit,
     Tool,
     ToolInKit,
 )
-from src.infrastructure.database import SessionTool as SessionToolDB
-from domain.shared import ID_TYPE
-from domain.session import Session, SessionTool
-from .repository import RepositoryProtocol, SqlAlchemyRepository
+from infrastructure.database import (
+    Session as SessionDB,
+)
+from infrastructure.database import SessionTool as SessionToolDB
 
 
 class SessionToolRepositoryProtocol(RepositoryProtocol[SessionTool, SessionToolDB]):
