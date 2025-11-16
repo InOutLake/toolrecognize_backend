@@ -3,15 +3,15 @@ from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from domain.shared import ID_TYPE
-from domain.session import SessionStatus
-
 from core import SETTINGS
+from domain.session import SessionStatus
+from domain.shared import ID_TYPE
 
-DB_ID_TYPE = Mapped[ID_TYPE]  # uuid, probably never change
+DB_ID_TYPE = Mapped[ID_TYPE]  # uuid from domain, probably never change
 
 
 class TimestampMixin:
@@ -29,7 +29,7 @@ class TimestampMixin:
 
 
 class Base(DeclarativeBase):
-    id: DB_ID_TYPE = mapped_column(primary_key=True)
+    id: DB_ID_TYPE = mapped_column(UUID(as_uuid=True), primary_key=True)
 
 
 class Employee(TimestampMixin, Base):

@@ -10,6 +10,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 revision: str = "0ae8b373378e"
@@ -18,8 +19,8 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-# For other databases compatibility reasons String is used
-UUID_TYPE = sa.String(36)
+# Using uuid makes migration incopatible to many other databases
+UUID_TYPE = postgresql.UUID
 
 base = (
     sa.Column("id", UUID_TYPE, primary_key=True),

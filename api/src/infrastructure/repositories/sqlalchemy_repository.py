@@ -6,6 +6,7 @@ from typing import (
     TypeVar,
 )
 
+from httpx import HTTPError
 from sqlalchemy import Select, String, delete, func, inspect, select
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession

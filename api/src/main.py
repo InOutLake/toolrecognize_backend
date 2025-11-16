@@ -6,6 +6,7 @@ from infrastructure.repositories.broker import get_broker
 import sys
 
 from presentation.api import session_router
+from presentation.api.apis import storage_router
 from core import SETTINGS
 
 
@@ -54,6 +55,7 @@ app.add_middleware(
 include_routers(
     app,
     session_router,
+    storage_router,
 )
 
 
