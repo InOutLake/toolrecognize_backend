@@ -1,4 +1,5 @@
-# Backend service for inventory automation  
+# Backend service for inventory automation 
+Note: I'm working on clean architecture for this app, you can check it out in the other branch
 ## Quickstart  
 Before start make sure you have cuda and nvidia container toolkit installed on your machine.
 
