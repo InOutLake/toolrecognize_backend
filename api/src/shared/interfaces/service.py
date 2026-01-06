@@ -7,9 +7,9 @@ from domain.shared import DomainModelT
 from shared.dtos import Page, PageParams
 from .repository import RepositoryProtocol
 
-CreateModelT = TypeVar("CreateModelT", bound=CreateDto, covariant=True)
-UpdateModelT = TypeVar("UpdateModelT", bound=UpdateDto, covariant=True)
-FiltersModelT = TypeVar("FiltersModelT", bound=FiltersDto)
+CreateModelT = TypeVar("CreateModelT", bound=CreateDto, contravariant=True)
+UpdateModelT = TypeVar("UpdateModelT", bound=UpdateDto, contravariant=True)
+FiltersModelT = TypeVar("FiltersModelT", bound=FiltersDto, contravariant=True)
 
 T = TypeVar("T", bound=BaseModel)
 

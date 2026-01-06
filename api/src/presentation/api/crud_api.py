@@ -30,6 +30,13 @@ class CRUDRouterFactory(
         ResponseModelT,
     ]
 ):
+    """
+    This one was a humble attempt to get rid of boilerplate CRUD api code.
+    Of course it did not work, fastapi doesn't work with generics.
+    I shall research on other Python mechanisms that may allow achieve my idea.
+    Maybe a simple inheritance, or even a function with parametrized types could do.
+    """
+
     def __init__(
         self,
         entity_name: str,

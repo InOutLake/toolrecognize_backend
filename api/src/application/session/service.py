@@ -71,8 +71,8 @@ class SessionService(
         self._recognition_service = recognition_service
         self._detections_mapper = detections_mapper
 
-    async def get_one_or_raise(self, session_id: ID_TYPE):
-        entity = await self._repository.get_one(filters={"id": session_id})
+    async def get_one_or_raise(self, id: ID_TYPE) -> Session:
+        entity = await self._repository.get_one(filters={"id": id})
         if not entity:
             raise SessionNotFoundException()
         return Session.model_validate(entity, from_attributes=True)
