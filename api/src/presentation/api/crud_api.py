@@ -1,107 +1,99 @@
-from typing import Annotated, Callable, Generic, Type
+from typing import Annotated, Callable, Generic, Type, Any
 
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.service import CRUDService
 from application.shared.dtos import (
-    CreateModelT,
-    FiltersModelT,
-    ResponseModelT,
-    UpdateBaseModelT,
-    UpdateModelT,
+    CreateDto,
+    FiltersDto,
+    ResponseDto,
+    UpdateDtoBase,
+    UpdateDto,
 )
-from domain.shared import ID_TYPE, DomainModelT
+from domain.shared import ID_TYPE, Domain
+from infrastructure.database.database import DbSessionDep
 from infrastructure.repositories.sqlalchemy_repository import (
-    SqlAlchemyModelT,
     SqlAlchemyRepository,
 )
 from shared.dtos.page import Page, PageRequestDep
+from infrastructure.database import Base
 
 
-class CRUDRouterFactory(
-    Generic[
-        DomainModelT,
-        SqlAlchemyModelT,
-        CreateModelT,
-        UpdateModelT,
-        UpdateBaseModelT,
-        FiltersModelT,
-        ResponseModelT,
-    ]
-):
-    """
-    This one was a humble attempt to get rid of boilerplate CRUD api code.
-    Of course it did not work, fastapi doesn't work with generics.
-    I shall research on other Python mechanisms that may allow achieve my idea.
-    Maybe a simple inheritance, or even a function with parametrized types could do.
-    """
+"""
+This is the only hard dependecy from the infrastructure layer here.
+It is absolutely viable to manage routes without hard deps.
+Look src/presentation/api/employee as an example.
+I simply couldn't bother writing tons of boilerplate code for basic CRUD operations.
+Generics were not an option here due to the way fastapi works and the way 
+Python resolves them (generics).
+There is also another viable option: fastapi-crudrouter library, which provides basically the same 
+functionality. But I discovered it a bit too late :'D
+"""
 
-    def __init__(
-        self,
-        entity_name: str,
-        domain_model: Type[DomainModelT],
-        sqlalchemy_model: Type[SqlAlchemyModelT],
-        db_session: AsyncSession,
-        create_model: Type[CreateModelT],
-        update_model: Type[UpdateModelT],
-        filters_model: Type[FiltersModelT],
-        filters_dep: Callable[..., FiltersModelT],
-        response_model: Type[ResponseModelT],
+
+def crud_router_factory(
+    entity_name: str,
+    domain_model: Type[Domain],
+    sqlalchemy_model: Type[Base],
+    create_model: Type[CreateDto],
+    update_base: Type[UpdateDtoBase],
+    update_model: Type[UpdateDto],
+    filters_model: Type[FiltersDto],
+    filters_func: Callable[..., FiltersDto],
+    response_model: Type[ResponseDto],
+) -> APIRouter:
+    router = APIRouter(prefix=f"/{entity_name}", tags=[entity_name])
+
+    async def get_service(session: DbSessionDep):
+        repo = SqlAlchemyRepository(domain_model, sqlalchemy_model, session)
+        return CRUDService(domain_model, repo)
+
+    # --- read ---
+    async def list_entities(
+        service: Annotated[Any, Depends(get_service)],
+        page: PageRequestDep,
+        filters: Any,
     ):
-        self.entity_name = entity_name
-        self.update_model = update_model
-        self.domain_model = domain_model
-        self.sqlalchemy_model = sqlalchemy_model
-        self.response_model = response_model
-        self.filters_dep = filters_dep
+        return await service.get_page(filters, page)
 
-        class EntityRepository(
-            SqlAlchemyRepository[domain_model, sqlalchemy_model]
-        ): ...
+    # NOTE: A little trick with annotations for FastAPI.
+    list_entities.__annotations__["filters"] = Annotated[
+        filters_model, Depends(filters_func)
+    ]
+    router.add_api_route(
+        "/", list_entities, methods=["GET"], response_model=Page[response_model]
+    )
 
-        class EntityService(
-            CRUDService[domain_model, create_model, update_model, filters_model]
-        ): ...
+    # --- create ---
+    @router.post("/", response_model=list[response_model])
+    async def create_entity(service: Annotated[Any, Depends(get_service)], data: Any):
+        return await service.create(data)
 
-        repository = EntityRepository(domain_model, sqlalchemy_model, db_session)
-        self._service = EntityService(domain_model, repository)
+    create_entity.__annotations__["data"] = Annotated[list[create_model], Body(...)]
+    router.add_api_route(
+        "/", create_entity, methods=["POST"], response_model=list[response_model]
+    )
 
-        self.router = APIRouter(prefix=f"/{entity_name}", tags=[entity_name])
+    # --- update ---
+    # TODO: this should support bulk operations too
+    async def update_entity(
+        service: Annotated[Any, Depends(get_service)],
+        entity_id: ID_TYPE,
+        data: Any,
+    ):
+        return await service.update([update_model(id=entity_id, **data.model_dump())])
 
-        @self.router.get("/")
-        def test(data: Annotated[filters_model, Body(...)]): ...
+    update_entity.__annotations__["data"] = Annotated[list[update_base], Body(...)]
+    router.add_api_route(
+        "/{entity_id}", update_entity, response_model=response_model, methods=["PUT"]
+    )
 
-        self._add_routes()
+    # --- delete ---
+    @router.delete("/{entity_id}", response_model=response_model)
+    async def get_entity_details(
+        service: Annotated[Any, Depends(get_service)], entity_id: ID_TYPE
+    ):
+        return await service.delete(entity_id)
 
-    def _add_routes(self):
-        @self.router.get("/", response_model=Page[self.response_model])
-        async def list_entities(
-            page: PageRequestDep,
-            filters: Annotated[
-                FiltersModelT,
-                Depends(self.filters_dep),
-            ],
-        ) -> Page[DomainModelT]:
-            return await self._service.get_page(filters, page)
-
-        @self.router.post("/", response_model=self.response_model)
-        async def create_entity(data: CreateModelT = Body(...)) -> DomainModelT:
-            return (await self._service.create(data))[0]
-
-        @self.router.get("/{entity_id}", response_model=self.response_model)
-        async def get_entity_details(entity_id: ID_TYPE) -> DomainModelT:
-            return await self._service.get_one_or_raise(entity_id)
-
-        @self.router.put("/{entity_id}", response_model=self.response_model)
-        async def update_entity(
-            entity_id: ID_TYPE,
-            data: UpdateBaseModelT = Body(...),
-        ) -> list[DomainModelT]:
-            return await self._service.update(
-                [self.update_model(id=entity_id, **data.model_dump())]
-            )
-
-        @self.router.delete("/{entity_id}")
-        async def delete_entity(entity_id: ID_TYPE) -> bool:
-            return await self._service.delete(entity_id)
+    return router

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "pytest-mcp-server": {
+      "command": "pytest-mcp-server",
+      "args": [
+        "start"
+      ],
+      "env": {
+        "DATA_DIR": "./pytest-data"
+      }
+    }
+  }
+}

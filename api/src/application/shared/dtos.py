@@ -22,8 +22,8 @@ class FiltersDto(BaseModel):
 class ResponseDto(BaseModel): ...
 
 
-CreateModelT = TypeVar("CreateModelT", bound=CreateDto, covariant=True)
+CreateModelT = TypeVar("CreateModelT", bound=CreateDto)
 UpdateBaseModelT = TypeVar("UpdateBaseModelT", bound=UpdateDtoBase)
-UpdateModelT = TypeVar("UpdateModelT", bound=UpdateDto, covariant=True)
+UpdateModelT = TypeVar("UpdateModelT", bound=UpdateDto)
 FiltersModelT = TypeVar("FiltersModelT", bound=FiltersDto)
 ResponseModelT = TypeVar("ResponseModelT", bound=ResponseDto)

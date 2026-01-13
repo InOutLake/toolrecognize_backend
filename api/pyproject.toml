@@ -1,7 +1,6 @@
 [project]
 name = "api"
 version = "0.1.0"
-description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -15,6 +14,7 @@ dependencies = [
   "pydantic-settings>=2.11.0",
   "pydantic[email]>=2.11.9",
   "pytest>=8.4.2",
+  "pytest-asyncio>=1.3.0",
   "python-dotenv[local]>=1.1.1",
   "python-multipart>=0.0.20",
   "sqlalchemy[asyncio]>=2.0.43",
@@ -25,6 +25,11 @@ dependencies = [
 venvPath = "."
 venv = ".venv"
 extraPaths = ["./src"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
 
 [tool.mypy]
 packages = ["api"]

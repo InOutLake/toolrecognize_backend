@@ -27,4 +27,4 @@ def get_employee_service(
     )
 
 
-EmployeeServiceDep = Annotated[EmployeeService, Depends(get_employee_service)]
+EmployeeServiceDep = Annotated[EmployeeServiceProtocol, Depends(get_employee_service)]

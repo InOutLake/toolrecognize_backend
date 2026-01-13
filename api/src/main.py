@@ -1,34 +1,33 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter, FastAPI
 from infrastructure.repositories.broker import get_broker
 import sys
+import logging
 
 from presentation.api import session_router
 from presentation.api.apis import storage_router
 from core import SETTINGS
 
 
-def include_routers(app: FastAPI, *routers: APIRouter) -> None:
-    for router in routers:
-        app.include_router(router)
-
-
 def run_tests():
     import pytest
 
+    tests_path = str(Path(__file__).parent / "tests")
+
     exit_code = pytest.main(
         [
-            "tests/",
+            tests_path,
             "-v",
             "--tb=short",
         ]
     )
     if exit_code != 0:
-        print("Tests failed. Exiting.")
+        logging.info("Tests failed. Exiting.")
         sys.exit(exit_code)
-    print("All tests passed!")
+    logging.info("All tests passed!")
 
 
 @asynccontextmanager
@@ -51,7 +50,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# there is a bug and routers cannot be added nor in init lifespan function nor in main due to it
+
+def include_routers(app: FastAPI, *routers: APIRouter) -> None:
+    for router in routers:
+        app.include_router(router)
+
+
+# there is a bug and routers cannot be added nor in init lifespan function nor in main
 include_routers(
     app,
     session_router,
