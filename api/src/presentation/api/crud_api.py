@@ -1,7 +1,6 @@
-from typing import Annotated, Callable, Generic, Type, Any
+from typing import Annotated, Callable, Type, Any
 
 from fastapi import APIRouter, Body, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.service import CRUDService
 from application.shared.dtos import (
@@ -62,17 +61,22 @@ def crud_router_factory(
         filters_model, Depends(filters_func)
     ]
     router.add_api_route(
-        "/", list_entities, methods=["GET"], response_model=Page[response_model]
+        "", list_entities, methods=["GET"], response_model=Page[response_model]
     )
 
+    @router.get("/{entity_id}", response_model=response_model)
+    async def get_by_id(
+        service: Annotated[Any, Depends(get_service)], entity_id: ID_TYPE
+    ):
+        return service.get_by_id(entity_id)
+
     # --- create ---
-    @router.post("/", response_model=list[response_model])
     async def create_entity(service: Annotated[Any, Depends(get_service)], data: Any):
         return await service.create(data)
 
     create_entity.__annotations__["data"] = Annotated[list[create_model], Body(...)]
     router.add_api_route(
-        "/", create_entity, methods=["POST"], response_model=list[response_model]
+        "", create_entity, methods=["POST"], response_model=list[response_model]
     )
 
     # --- update ---
@@ -82,16 +86,17 @@ def crud_router_factory(
         entity_id: ID_TYPE,
         data: Any,
     ):
-        return await service.update([update_model(id=entity_id, **data.model_dump())])
+        result = await service.update([update_model(id=entity_id, **data.model_dump())])
+        return result[0]
 
-    update_entity.__annotations__["data"] = Annotated[list[update_base], Body(...)]
+    update_entity.__annotations__["data"] = Annotated[update_base, Body(...)]
     router.add_api_route(
         "/{entity_id}", update_entity, response_model=response_model, methods=["PUT"]
     )
 
     # --- delete ---
     @router.delete("/{entity_id}", response_model=response_model)
-    async def get_entity_details(
+    async def delete_entity(
         service: Annotated[Any, Depends(get_service)], entity_id: ID_TYPE
     ):
         return await service.delete(entity_id)

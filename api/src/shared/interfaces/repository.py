@@ -7,6 +7,8 @@ from typing import (
     TypeVar,
 )
 
+from pydantic import BaseModel
+
 from domain.shared import DomainModelT
 from shared.dtos.page import Page, PageParams
 
@@ -23,7 +25,7 @@ class RepositoryProtocol(Protocol[DomainModelT, DatabaseModelT]):
         session: Any,
     ) -> None: ...
 
-    async def to_orm(self, data: list[DomainModelT]) -> list[DatabaseModelT]: ...
+    async def to_orm(self, data: list[BaseModel]) -> list[DatabaseModelT]: ...
 
     async def to_domain(self, data: list[DatabaseModelT]) -> list[DomainModelT]: ...
 

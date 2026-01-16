@@ -1,9 +1,11 @@
 from datetime import datetime
+import logging
 from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -151,7 +153,6 @@ engine = create_async_engine(
     pool_timeout=30,
     pool_recycle=30 * 60,
     echo=False,
-    future=True,
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -165,8 +166,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
-        finally:
-            await session.close()
+        except SQLAlchemyError as e:
+            logging.error(e)
+            await session.rollback()
 
 
 DbSessionDep = Annotated[AsyncSession, Depends(get_db)]

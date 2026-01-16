@@ -24,8 +24,8 @@ class StorageCreateDto(CreateDto):
 
 
 class StorageUpdateDtoBase(UpdateDtoBase):
-    name: str
-    address: str
+    name: str | None = None
+    address: str | None = None
 
 
 class StorageUpdateDto(UpdateDto, StorageUpdateDtoBase): ...

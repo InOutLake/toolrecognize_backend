@@ -49,11 +49,11 @@ class CRUDService(
             page=page,
         )
 
-    async def get_one(self, id: Any) -> DomainModelT | None:
+    async def get_by_id(self, id: Any) -> DomainModelT | None:
         return await self._repository.get_one(filters={"id": id})
 
-    async def get_one_or_raise(self, id: Any) -> DomainModelT:
-        entity = await self.get_one(id)
+    async def get_by_id_or_raise(self, id: Any) -> DomainModelT:
+        entity = await self.get_by_id(id)
         if entity is None:
             raise HTTPError(message="Entity not found")
         return entity

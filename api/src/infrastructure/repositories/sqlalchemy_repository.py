@@ -4,9 +4,12 @@ from typing import (
     Sequence,
     Type,
     TypeVar,
+    overload,
+    override,
 )
 
 from httpx import HTTPError
+from pydantic import BaseModel
 from sqlalchemy import Select, String, delete, func, inspect, select
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,8 +43,11 @@ class SqlAlchemyRepository(RepositoryProtocol[DomainModelT, SqlAlchemyModelT]):
         self.database_model = database_model
         self.session: AsyncSession = session
 
-    async def to_orm(self, data: list[DomainModelT]) -> list[SqlAlchemyModelT]:
-        """Redefine for nested relations"""
+    async def to_orm(self, data: Sequence[BaseModel]) -> list[SqlAlchemyModelT]:
+        """
+        Redefine for nested operations. Base model is used instead of Domain model because
+        input may be an update model intead.
+        """
         return [self.database_model(**entity.model_dump()) for entity in data]
 
     async def to_domain(self, data: list[SqlAlchemyModelT]) -> list[DomainModelT]:

@@ -22,6 +22,9 @@ class FiltersDto(BaseModel):
 class ResponseDto(BaseModel): ...
 
 
+class DtoUnset(BaseModel): ...
+
+
 CreateModelT = TypeVar("CreateModelT", bound=CreateDto)
 UpdateBaseModelT = TypeVar("UpdateBaseModelT", bound=UpdateDtoBase)
 UpdateModelT = TypeVar("UpdateModelT", bound=UpdateDto)

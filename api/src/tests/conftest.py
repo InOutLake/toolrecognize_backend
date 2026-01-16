@@ -1,26 +1,47 @@
-from httpx import ASGITransport, AsyncClient
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from core.settings import SETTINGS
+from infrastructure.database.database import get_db
 from main import app
-from infrastructure.database.database import AsyncSessionLocal, get_db
 
 
-# fixes sharing database connection between tests
 @pytest_asyncio.fixture(scope="function")
-async def test_async_session():
-    async with AsyncSessionLocal() as session:
+async def engine():
+    engine = create_async_engine(SETTINGS.database_url, pool_size=5, echo=True)
+    yield engine
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def test_db_session(engine):
+    session_factory = async_sessionmaker(
+        bind=engine,
+        expire_on_commit=False,
+        autoflush=False,
+        autocommit=False,
+    )
+    async with session_factory() as session:
+        await session.begin()
         yield session
+        await session.rollback()
 
 
-@pytest_asyncio.fixture(scope="function", autouse=True)
-async def override_db(test_async_session):
-    app.dependency_overrides[get_db] = lambda: test_async_session
-    yield
+@pytest_asyncio.fixture(scope="function")
+async def patched_app(test_db_session):
+    async def override_dependency():
+        yield test_db_session
+
+    app.dependency_overrides[get_db] = override_dependency
+    yield app
     app.dependency_overrides.pop(get_db)
 
 
 @pytest_asyncio.fixture(scope="function")
-async def async_client(override_db):
+async def async_client(patched_app):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://testserver"
+        transport=ASGITransport(app=patched_app), base_url="http://testserver"
     ) as ac:
         yield ac
+    await ac.aclose()

@@ -17,7 +17,7 @@ stop-services:
 
 run-tests:
 	@echo "Running tests in api container..."
-	docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) run --rm -e TEST=1 -e PYTHONPATH=/app/src api uv run python -m pytest $(TESTS_DIR) -v
+	docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) run --rm -e TEST=1 -e PYTHONPATH=/app/src -e PYTHONASYNCIODEBUG=1 api uv run python -m pytest $(TESTS_DIR) -v
 
 run-tests-full: start-services
 	@echo "Starting services and running tests..."
