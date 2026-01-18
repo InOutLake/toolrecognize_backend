@@ -1,22 +1,13 @@
-FROM python:3.13-slim AS base
-RUN pip install uv
-
-FROM base as deps
-
+FROM ghcr.io/astral-sh/uv:python3.13-alpine as deps
 WORKDIR /app
-
-COPY pyproject.toml uv.lock ./
-
-RUN uv venv .venv \
-    && uv sync --frozen
+COPY pyproject.toml uv.lock .
+RUN uv venv .venv && uv sync
 
 FROM deps AS final
-
 WORKDIR /app
 COPY . .
-
-EXPOSE 5678 8000
-
-CMD ["uv", "run", "main.py"]
+EXPOSE 5678
+EXPOSE 8000
+CMD ["uv", "run", "src/main.py"]
 
 

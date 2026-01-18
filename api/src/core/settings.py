@@ -1,3 +1,5 @@
+from typing import Any
+from domain.shared import ID_TYPE
 from pydantic_settings import BaseSettings
 import json
 
@@ -61,7 +63,7 @@ class Settings(BaseSettings):
         return f"amqp://{self.rabbitmq_default_user}:{self.rabbitmq_default_pass}@{self.rabbitmq_host}:{self.rabbitmq_port}"
 
     @property
-    def tools_mapping(self) -> dict[int, int]:
+    def tools_mapping(self) -> dict[Any, ID_TYPE]:
         tools_mapping = json.loads(self.tools_mapping_str)
         return {int(key): value for key, value in tools_mapping.items()}
 

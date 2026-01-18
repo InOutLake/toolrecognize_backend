@@ -1,0 +1,1 @@
+- [ ] Honestly, I should write overload methods for the repository methods. Using generics with list[model] | model makes pyright freak out.
