@@ -19,7 +19,9 @@ class CRUDServiceProtocol(
 ):
     """CRUD operations service protocol. Mixin to add basic CRUD interface for domain"""
 
-    def __init__(self, repository: RepositoryProtocol[DomainModelT, Any]) -> None: ...
+    def __init__(
+        self, repository: RepositoryProtocol[DomainModelT, UpdateModelT, Any]
+    ) -> None: ...
 
     async def get_page(
         self, filters: FiltersModelT, page: PageParams

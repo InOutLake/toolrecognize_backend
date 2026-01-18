@@ -62,7 +62,7 @@ async def test_list_storages_with_filters(async_client):
         assert STORAGE_DATA["name"] in item["name"]
 
     # Test filtering by address
-    response = await async_client.get(f"/storage/?address={STORAGE_DATA['address']}")
+    response = await async_client.get(f"/storage?address={STORAGE_DATA['address']}")
     assert response.status_code == 200
 
     data = response.json()
@@ -90,7 +90,7 @@ async def test_update_storage(async_client):
     assert response.status_code == 200
 
     data = response.json()
-    assert data["id"] == storage_id["id"]
+    assert data["id"] == storage_id
     assert data["name"] == UPDATED_STORAGE_DATA["name"]
     assert data["address"] == UPDATED_STORAGE_DATA["address"]
 
@@ -112,7 +112,7 @@ async def test_get_storage_details_after_creation_and_update(async_client):
         f"/storage/{storage_data['id']}", json=update_data
     )
     print(response)
-    assert response == 200
+    assert response.status_code == 200
 
     # Get the storage details
     response = await async_client.get(f"/storage/{storage_data['id']}")
@@ -137,11 +137,11 @@ async def test_delete_storage(async_client):
 
     # Delete the storage
     response = await async_client.delete(f"/storage/{storage_id}")
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     # Verify the storage is gone by trying to get it
     get_response = await async_client.get(f"/storage/{storage_id}")
-    assert get_response == 404
+    assert get_response.status_code == 404
 
 
 @pytest.mark.asyncio

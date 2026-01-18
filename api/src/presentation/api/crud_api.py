@@ -1,6 +1,6 @@
 from typing import Annotated, Callable, Type, Any
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from application.service import CRUDService
 from application.shared.dtos import (
@@ -46,7 +46,7 @@ def crud_router_factory(
 
     async def get_service(session: DbSessionDep):
         repo = SqlAlchemyRepository(domain_model, sqlalchemy_model, session)
-        return CRUDService(domain_model, repo)
+        return CRUDService(domain_model, update_model, repo)
 
     # --- read ---
     async def list_entities(
@@ -68,7 +68,10 @@ def crud_router_factory(
     async def get_by_id(
         service: Annotated[Any, Depends(get_service)], entity_id: ID_TYPE
     ):
-        return service.get_by_id(entity_id)
+        entity = await service.get_by_id(entity_id)
+        if entity is None:
+            raise HTTPException(status_code=404, detail="Entity not found")
+        return entity
 
     # --- create ---
     async def create_entity(service: Annotated[Any, Depends(get_service)], data: Any):
@@ -86,7 +89,9 @@ def crud_router_factory(
         entity_id: ID_TYPE,
         data: Any,
     ):
-        result = await service.update([update_model(id=entity_id, **data.model_dump())])
+        result = await service.update(
+            update_model(id=entity_id, **data.model_dump(exclude_unset=True))
+        )
         return result[0]
 
     update_entity.__annotations__["data"] = Annotated[update_base, Body(...)]
@@ -95,10 +100,14 @@ def crud_router_factory(
     )
 
     # --- delete ---
-    @router.delete("/{entity_id}", response_model=response_model)
+    @router.delete("/{entity_id}", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_entity(
         service: Annotated[Any, Depends(get_service)], entity_id: ID_TYPE
-    ):
-        return await service.delete(entity_id)
+    ) -> None:
+        result = await service.delete(entity_id)
+        if result:
+            return None
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
     return router

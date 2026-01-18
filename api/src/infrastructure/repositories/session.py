@@ -3,6 +3,7 @@ from fastapi import Depends
 from sqlalchemy import Select
 
 from sqlalchemy.orm import selectinload
+from application.session.dtos import SessionUpdateDto
 from infrastructure.database import Session as SessionDB, DbSessionDep
 from domain.session import Session
 from shared.interfaces.repository import RepositoryProtocol
@@ -10,7 +11,9 @@ from .sqlalchemy_repository import SqlAlchemyRepository
 from .session_tool import SessionToolRepositoryProtocol, SessionToolRepositoryDep
 
 
-class SessionRepositoryProtocol(RepositoryProtocol[Session, SessionDB]):
+class SessionRepositoryProtocol(
+    RepositoryProtocol[Session, SessionUpdateDto, SessionDB]
+):
     def __init__(
         self,
         domain_model: Type[Session],
@@ -21,7 +24,8 @@ class SessionRepositoryProtocol(RepositoryProtocol[Session, SessionDB]):
 
 
 class SessionRepository(
-    SqlAlchemyRepository[Session, SessionDB], SessionRepositoryProtocol
+    SqlAlchemyRepository[Session, SessionUpdateDto, SessionDB],
+    SessionRepositoryProtocol,
 ):
     def __init__(
         self,
@@ -43,7 +47,7 @@ class SessionRepository(
         stmt = super()._build_select(filters, extra_filters, order_by)
         return stmt.options(selectinload(SessionDB.session_tools))
 
-    async def to_orm(self, data: list[Session]) -> list[SessionDB]:
+    async def to_orm(self, data: Sequence[Session]) -> list[SessionDB]:
         rows = []
         for session in data:
             row = SessionDB(**session.model_dump())
@@ -53,7 +57,7 @@ class SessionRepository(
             rows.append(row)
         return rows
 
-    async def to_domain(self, data: list[SessionDB]) -> list[Session]:
+    async def to_domain(self, data: Sequence[SessionDB]) -> list[Session]:
         sessions = []
         for row in data:
             session = Session.model_validate(row)

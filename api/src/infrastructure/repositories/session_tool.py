@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy import func, select
 
+from application.shared.dtos import UpdateDto
 from domain.session import Session, SessionTool
 from domain.shared import ID_TYPE
 from infrastructure.repositories.sqlalchemy_repository import SqlAlchemyRepository
@@ -19,13 +20,22 @@ from infrastructure.database import (
 from infrastructure.database import SessionTool as SessionToolDB
 
 
-class SessionToolRepositoryProtocol(RepositoryProtocol[SessionTool, SessionToolDB]):
+class SessionToolUpdateDto(UpdateDto):
+    tool_id: ID_TYPE
+    tool_name: str | None = None
+    quantity_given: int | None = None
+    quantity_returned: int | None = None
+
+
+class SessionToolRepositoryProtocol(
+    RepositoryProtocol[SessionTool, SessionToolUpdateDto, SessionToolDB]
+):
     async def session_tools_info(self, session_id: ID_TYPE) -> list[SessionTool]: ...
 
 
 class SessionToolRepository(
     SessionToolRepositoryProtocol,
-    SqlAlchemyRepository[SessionTool, SessionToolDB],
+    SqlAlchemyRepository[SessionTool, SessionToolUpdateDto, SessionToolDB],
 ):
     async def session_tools_info(self, session_id: ID_TYPE) -> list[SessionTool]:
         stmt = (

@@ -7,15 +7,14 @@ from typing import (
     TypeVar,
 )
 
-from pydantic import BaseModel
-
+from application.shared.dtos import UpdateModelT
 from domain.shared import DomainModelT
 from shared.dtos.page import Page, PageParams
 
 DatabaseModelT = TypeVar("DatabaseModelT", bound=Any)
 
 
-class RepositoryProtocol(Protocol[DomainModelT, DatabaseModelT]):
+class RepositoryProtocol(Protocol[DomainModelT, UpdateModelT, DatabaseModelT]):
     """Basic CRUD operations for database"""
 
     def __init__(
@@ -25,9 +24,9 @@ class RepositoryProtocol(Protocol[DomainModelT, DatabaseModelT]):
         session: Any,
     ) -> None: ...
 
-    async def to_orm(self, data: list[BaseModel]) -> list[DatabaseModelT]: ...
+    async def to_orm(self, data: Sequence[DomainModelT]) -> list[DatabaseModelT]: ...
 
-    async def to_domain(self, data: list[DatabaseModelT]) -> list[DomainModelT]: ...
+    async def to_domain(self, data: Sequence[DatabaseModelT]) -> list[DomainModelT]: ...
 
     async def get_page(
         self,
@@ -38,7 +37,9 @@ class RepositoryProtocol(Protocol[DomainModelT, DatabaseModelT]):
         page: PageParams,
     ) -> Page[DomainModelT]: ...
 
-    async def save(self, data: list[DomainModelT]) -> list[DomainModelT]: ...
+    async def create(self, data: Sequence[DomainModelT]) -> list[DomainModelT]: ...
+
+    async def update(self, data: Sequence[UpdateModelT]) -> list[DomainModelT]: ...
 
     async def get_one(
         self,

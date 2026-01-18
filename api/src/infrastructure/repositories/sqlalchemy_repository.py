@@ -4,19 +4,26 @@ from typing import (
     Sequence,
     Type,
     TypeVar,
-    overload,
-    override,
 )
 
-from httpx import HTTPError
-from pydantic import BaseModel
-from sqlalchemy import Select, String, delete, func, inspect, select
+from sqlalchemy import (
+    Select,
+    String,
+    bindparam,
+    func,
+    insert,
+    inspect,
+    select,
+    delete,
+    update,
+)
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.dtos import Page, PageParams
+from application.shared.dtos import UpdateModelT
 from domain.shared import DomainModelT
 from infrastructure.database import Base
+from shared.dtos import Page, PageParams
 from shared.interfaces.repository import RepositoryProtocol
 
 DatabaseModelT = TypeVar("DatabaseModelT", bound=Any)
@@ -25,7 +32,9 @@ DatabaseModelT = TypeVar("DatabaseModelT", bound=Any)
 SqlAlchemyModelT = TypeVar("SqlAlchemyModelT", bound=Base)
 
 
-class SqlAlchemyRepository(RepositoryProtocol[DomainModelT, SqlAlchemyModelT]):
+class SqlAlchemyRepository(
+    RepositoryProtocol[DomainModelT, UpdateModelT, SqlAlchemyModelT]
+):
     """
     Basic CRUD operationss with async sqlalchemy library, fit for small daily operations.
     May be slow for large batches due to heavy ORM dependence.
@@ -43,16 +52,12 @@ class SqlAlchemyRepository(RepositoryProtocol[DomainModelT, SqlAlchemyModelT]):
         self.database_model = database_model
         self.session: AsyncSession = session
 
-    async def to_orm(self, data: Sequence[BaseModel]) -> list[SqlAlchemyModelT]:
-        """
-        Redefine for nested operations. Base model is used instead of Domain model because
-        input may be an update model intead.
-        """
+    async def to_orm(self, data: Sequence[DomainModelT]) -> list[SqlAlchemyModelT]:
+        """Redefine for nested relations"""
         return [self.database_model(**entity.model_dump()) for entity in data]
 
-    async def to_domain(self, data: list[SqlAlchemyModelT]) -> list[DomainModelT]:
-        """Redefine for nested relations"""
-        return [self.domain_model.model_validate(row) for row in data]
+    async def to_domain(self, data: Sequence[SqlAlchemyModelT]) -> list[DomainModelT]:
+        return [self.domain_model.model_validate(m) for m in data]
 
     def _build_select(
         self,
@@ -140,12 +145,32 @@ class SqlAlchemyRepository(RepositoryProtocol[DomainModelT, SqlAlchemyModelT]):
             return page.items[0]
         return None
 
-    async def save(self, data: list[DomainModelT]) -> list[DomainModelT]:
-        rows = await self.to_orm(data)
-        for row in rows:
-            await self.session.merge(row)
+    async def create(self, data: Sequence[DomainModelT]) -> list[DomainModelT]:
+        rows = [m.model_dump() for m in data]
+        created = await self.session.scalars(
+            insert(self.database_model).returning(self.database_model), rows
+        )
         await self.session.commit()
-        return await self.to_domain(rows)
+        return await self.to_domain(created.all())
+
+    async def update(self, data: Sequence[UpdateModelT]) -> list[DomainModelT]:
+        updated_entities = []
+        # NOTE: it fits but it is not optimised for bulk updates. I went with this option
+        # because there is no other way to support updates of non-unified data.
+        for m in data:
+            payload = m.model_dump(exclude_unset=True)
+            stmt = (
+                update(self.database_model)
+                .where(self.database_model.id == m.id)
+                .values(**payload)
+                .returning(self.database_model)
+                .execution_options(synchronize_session=False)
+            )
+            res = await self.session.execute(stmt)
+            updated_entities.append(res.scalar_one())
+
+        await self.session.commit()
+        return await self.to_domain(updated_entities)
 
     async def delete(self, ids: list[Any]) -> bool:
         pk_cols = inspect(self.database_model).primary_key

@@ -1,7 +1,6 @@
 from typing import Any, TypeVar
 
 from httpx import HTTPError
-from pydantic import BaseModel
 
 from application.shared.dtos import CreateModelT, UpdateModelT, FiltersModelT
 from domain.shared import DomainModelT
@@ -26,8 +25,10 @@ class CRUDService(
     def __init__(
         self,
         domain_model: type[DomainModelT],
-        repository: RepositoryProtocol[DomainModelT, Any],
+        update_model: type[UpdateModelT],
+        repository: RepositoryProtocol[DomainModelT, UpdateModelT, Any],
     ) -> None:
+        self._update_model = update_model
         self._domain_model = domain_model
         self._repository = repository
 
@@ -58,24 +59,20 @@ class CRUDService(
             raise HTTPError(message="Entity not found")
         return entity
 
-    async def _update_or_create(self, data: Any) -> list[DomainModelT]:
-        data_unified = self._unify_to_list(data)
-        domain_models = [
-            self._domain_model(**create_data.model_dump())
-            for create_data in data_unified
-        ]
-        return await self._repository.save(domain_models)
-
     async def create(
         self, data: CreateModelT | list[CreateModelT]
     ) -> list[DomainModelT]:
-        return await self._update_or_create(data)
+        data = self._unify_to_list(data)
+        domain_models = [self._domain_model.model_validate(m) for m in data]
+        return await self._repository.create(domain_models)
 
     async def update(
         self,
         data: UpdateModelT | list[UpdateModelT],
     ) -> list[DomainModelT]:
-        return await self._update_or_create(data)
+        unified = self._unify_to_list(data)
+        updates = [self._update_model.model_validate(row) for row in unified]
+        return await self._repository.update(updates)
 
     async def delete(self, data: ID_TYPE | list[ID_TYPE]) -> bool:
         data_unified = self._unify_to_list(data)
